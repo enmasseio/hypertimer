@@ -171,7 +171,7 @@ describe('hypertimer', function () {
     var time = timer.now();
     var str = timer.toString();
 
-    assert.strictEqual(str, time.toISOString());
+    assert.strictEqual(str, time.toString());
   });
 
 });
