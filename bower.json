@@ -1,7 +1,7 @@
 {
   "name": "hypertimer",
   "version": "0.0.1",
-  "description": "A timer running faster or slower than realtime, in continuous or discrete time.",
+  "description": "A timer running faster or slower than real-time, in continuous or discrete time.",
   "homepage": "https://github.com/enmasseio/hypertimer",
   "repository": {
     "type": "git",
@@ -10,8 +10,6 @@
   "ignore": [
     "node_modules",
     "coverage",
-    "lib",
-    "test",
     ".idea",
     "gulpfile.js",
     "package.json",

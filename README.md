@@ -1,13 +1,20 @@
 hypertimer
 ==========
 
-A timer running faster or slower than realtime, in continuous or discrete time.
+A timer running in [hypertime](http://en.wikipedia.org/wiki/Hypertime): 
+faster or slower than [real-time](http://en.wikipedia.org/wiki/Real-time_clock), 
+and either in continuous or discrete time.
+
 
 ## Install
 
 Install via npm:
 
     npm install hypertimer
+
+Install via bower:
+
+    bower install hypertimer
 
 
 ## Use
