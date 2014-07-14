@@ -1,3 +1,5 @@
+// NOTE: all timeouts should have time differences of at least 50ms to be
+//       safely distinguishably
 var assert = require('assert');
 var async = require('async');
 var HyperTimer = require('../lib/HyperTimer');
@@ -7,10 +9,10 @@ var HyperTimer = require('../lib/HyperTimer');
  * Throws an assertion error when the dates are not approximately equal.
  * @param {Date} date1
  * @param {Date} date2
- * @param {Number} [epsilon=10]  maximum difference in milliseconds
+ * @param {Number} [epsilon=25]  maximum difference in milliseconds
  */
 function approx(date1, date2, epsilon) {
-  assert(Math.abs(date1 - date2) < (epsilon === undefined ? 10 : epsilon),
+  assert(Math.abs(date1 - date2) < (epsilon === undefined ? 25 : epsilon),
       date1.toISOString() + ' ~= ' + date2.toISOString());
 }
 
@@ -18,8 +20,8 @@ describe('approx', function () {
   it ('should compare two dates', function () {
     var a = new Date();
     var b = new Date(a.valueOf() + 0);
-    var c = new Date(a.valueOf() + 20);
-    var d = new Date(a.valueOf() + 200);
+    var c = new Date(a.valueOf() + 30);
+    var d = new Date(a.valueOf() + 300);
     approx(a, b);
     assert.throws(function() {approx(a, c)});
     approx(a, c, 100);
@@ -68,7 +70,7 @@ describe('hypertimer', function () {
     it('should throw an error on invalid rate', function () {
       assert.throws(function () {
         new HyperTimer({rate: 'bla'});
-      }, /TypeError: Rate must be a number/);
+      }, /TypeError: rate must be a number/);
     });
 
   });
@@ -88,8 +90,8 @@ describe('hypertimer', function () {
 
     it ('should throw an error in case of invalid variable', function () {
       var timer = new HyperTimer({rate: 1});
-      assert.throws(function () {timer.setTime('bla')}, /Time must be a Date or number/);
-      assert.throws(function () {timer.setTime({})}, /Time must be a Date or number/);
+      assert.throws(function () {timer.setTime('bla')}, /time must be a Date or number/);
+      assert.throws(function () {timer.setTime({})}, /time must be a Date or number/);
     });
 
     it ('should get the current hyper-time as Date', function () {
@@ -193,7 +195,6 @@ describe('hypertimer', function () {
       var timer = new HyperTimer({rate: 1});
       var start = new Date();
 
-      var delay = 100;
       timer.setTimeout(function () {
         approx(new Date(), new Date(start.valueOf() + 100));
         done();
@@ -367,6 +368,19 @@ describe('hypertimer', function () {
         done();
       }, 250)
     });
+
+    it('should be able to use setTimout from a different context', function (done) {
+      var timer = new HyperTimer({rate: 1/2});
+      var start = new Date();
+
+      var mySetTimeout = timer.setTimeout;
+
+      mySetTimeout(function () {
+        approx(new Date(), new Date(start.valueOf() + 200));
+        done();
+      }, 100);
+    });
+
   });
 
   describe('trigger', function () {
@@ -616,16 +630,141 @@ describe('hypertimer', function () {
   });
 
   describe('interval', function () {
-    // TODO: test setInterval
-    // TODO: test clearInterval
+    it('should set an interval', function (done) {
+      var timer = new HyperTimer({rate: 1/2});
+      var start = new Date();
+
+      var occurrence = 0;
+      var interval = timer.setInterval(function () {
+        occurrence++;
+        approx(new Date(), new Date(start.valueOf() + occurrence * 100));
+        approx(timer.getTime(), new Date(start.valueOf() + occurrence * 50));
+        if (occurrence == 3) {
+          timer.clearInterval(interval);
+          assert.deepEqual(timer.timeouts, []);
+          done();
+        }
+      }, 50);
+    });
+
+    it('should set an interval with firstTime', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var start = new Date();
+
+      timer.setTime(new Date(2014,0,1,12,0,0,0));
+
+      var firstTime = new Date(2014,0,1,12,0,0,300);
+      var occurrence = 0;
+      var interval = timer.setInterval(function () {
+        occurrence++;
+        approx(new Date(), new Date(start.valueOf() + 300 + (occurrence - 1) * 100));
+        approx(timer.getTime(), new Date(firstTime.valueOf() + (occurrence - 1) * 100));
+        if (occurrence == 3) {
+          timer.clearInterval(interval);
+          assert.deepEqual(timer.timeouts, []);
+          done();
+        }
+      }, 100, firstTime);
+    });
+
+    it('should set an interval with a number as firstTime', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var start = new Date();
+
+      timer.setTime(new Date(2014,0,1,12,0,0,0));
+
+      var firstTime = new Date(2014,0,1,12,0,0,300);
+      var occurrence = 0;
+      var interval = timer.setInterval(function () {
+        occurrence++;
+        approx(new Date(), new Date(start.valueOf() + 300 + (occurrence - 1) * 100));
+        approx(timer.getTime(), new Date(firstTime.valueOf() + (occurrence - 1) * 100));
+        if (occurrence == 4) {
+          timer.clearInterval(interval);
+          assert.deepEqual(timer.timeouts, []);
+          done();
+        }
+      }, 100, firstTime.valueOf());
+    });
+
+    it('should clear an interval', function (done) {
+      var timer = new HyperTimer({rate: 1});
+
+      var interval = timer.setInterval(function () {
+        assert(false, 'should not trigger interval')
+      }, 100);
+
+      timer.clearInterval(interval);
+      assert.deepEqual(timer.timeouts, []);
+
+      // wait until the time where the interval should have been triggered
+      setTimeout(function () {
+        done();
+      }, 200);
+    });
+
+    it('should set a negative interval', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var start = new Date();
+
+      var occurrence = 0;
+      var interval = timer.setInterval(function () {
+        occurrence++;
+        approx(new Date(), start);
+        approx(timer.getTime(), start);
+        if (occurrence == 4) {
+          timer.clearInterval(interval);
+          assert.deepEqual(timer.timeouts, []);
+          done();
+        }
+      }, -100);
+    });
+
+    it('should set a negative interval with firstTime', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var timerStart = new Date(2014,0,1,12,0,0,0);
+      var realStart = new Date(new Date().valueOf() + 200);
+      var firstStart = new Date(2014,0,1,12,0,0,200);
+
+      timer.setTime(timerStart);
+
+      var occurrence = 0;
+      var interval = timer.setInterval(function () {
+        occurrence++;
+        approx(new Date(), realStart);
+        approx(timer.getTime(), firstStart);
+        if (occurrence == 4) {
+          timer.clearInterval(interval);
+          assert.deepEqual(timer.timeouts, []);
+          done();
+        }
+      }, -100, firstStart);
+    });
+
+    it('should set an infinite interval', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var start = new Date();
+
+      var occurrence = 0;
+      var interval = timer.setInterval(function () {
+        occurrence++;
+        approx(new Date(), start);
+        approx(timer.getTime(), start);
+        if (occurrence == 4) {
+          timer.clearInterval(interval);
+          assert.deepEqual(timer.timeouts, []);
+          done();
+        }
+      }, Infinity);
+    });
   });
 
-  // TODO: test with a numeric time instead of Dates, timer.setTime(0), rate='discrete', and timeouts like timer.timeout(cb, 1)
+  // TODO: test with a numeric time instead of "real" Dates, timer.setTime(0), rate='discrete', and timeouts like timer.timeout(cb, 1)
 
   it('should get valueOf', function () {
     var timer = new HyperTimer();
     assert(timer.valueOf() instanceof Date);
-    assert.equal(timer.valueOf().valueOf(), timer.getTime().valueOf());
+    approx(timer.valueOf(), timer.getTime());
   });
 
   it('should get toString', function () {
