@@ -50,12 +50,12 @@ describe('hypertimer', function () {
 
     it('should update configuration', function () {
       var timer = new HyperTimer({rate: 1});
-      timer.set(new Date(2014,0,1,12,0,0,0));
-      approx(timer.now(), new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      approx(timer.getTime(), new Date(2014,0,1,12,0,0,0));
 
       timer.config({rate: 10});
       assert.equal(timer.config().rate, 10);
-      approx(timer.now(), new Date(2014,0,1,12,0,0,0));
+      approx(timer.getTime(), new Date(2014,0,1,12,0,0,0));
     });
 
     it('should throw an error on invalid rate', function () {
@@ -73,7 +73,7 @@ describe('hypertimer', function () {
       assert.equal(timer.running, true);
     });
 
-    // TODO: test whether set(time) throws an error in case of invalid type of time
+    // TODO: test whether setTime(time) throws an error in case of invalid type of time
 
     it('should test whether running', function () {
       var timer = new HyperTimer({rate: 1});
@@ -88,15 +88,15 @@ describe('hypertimer', function () {
       var timer = new HyperTimer({rate: 1});
       timer.pause();
 
-      var a = timer.now();
-      approx(timer.now(), new Date());
+      var a = timer.getTime();
+      approx(timer.getTime(), new Date());
 
       setTimeout(function () {
         timer.continue(); // continue
-        approx(timer.now(), a);
+        approx(timer.getTime(), a);
 
         setTimeout(function () {
-          approx(timer.now(), new Date(a.valueOf() + 100));
+          approx(timer.getTime(), new Date(a.valueOf() + 100));
           done();
         }, 100);
       }, 100);
@@ -106,24 +106,24 @@ describe('hypertimer', function () {
       var d = new Date(2014,0,1);
       var timer = new HyperTimer({rate: 1});
 
-      approx(timer.now(), new Date());
+      approx(timer.getTime(), new Date());
 
-      timer.set(d);
-      approx(timer.now(), d);
+      timer.setTime(d);
+      approx(timer.getTime(), d);
     });
 
     it('time should not change when paused', function (done) {
       var d = new Date(2014,0,1);
       var timer = new HyperTimer({rate: 1});
 
-      timer.set(d);
-      approx(timer.now(), d);
+      timer.setTime(d);
+      approx(timer.getTime(), d);
 
       timer.pause();
-      approx(timer.now(), d);
+      approx(timer.getTime(), d);
 
       setTimeout(function () {
-        approx(timer.now(), d);
+        approx(timer.getTime(), d);
         done();
       }, 100);
     });
@@ -138,11 +138,11 @@ describe('hypertimer', function () {
       async.map(rates, function (rate, cb) {
         var timer = new HyperTimer({rate: rate});
         var started = new Date();
-        approx(timer.now(), started);
+        approx(timer.getTime(), started);
 
         var delay = 200;
         setTimeout(function () {
-          approx(timer.now(), new Date(started.valueOf() + delay * rate), epsilon);
+          approx(timer.getTime(), new Date(started.valueOf() + delay * rate), epsilon);
           cb();
         }, delay);
       }, done);
@@ -153,14 +153,14 @@ describe('hypertimer', function () {
   describe('now', function () {
     it ('should get the current hyper-time as Date', function () {
       var timer = new HyperTimer({rate: 1});
-      assert(timer.now() instanceof Date, 'must return a Date');
-      approx(timer.now(), new Date());
+      assert(timer.getTime() instanceof Date, 'must return a Date');
+      approx(timer.getTime(), new Date());
     });
 
     it ('should get the current hyper-time as number', function () {
       var timer = new HyperTimer({rate: 1});
-      assert(typeof timer.get(), 'number');
-      approx(new Date(timer.get()), new Date());
+      assert(typeof timer.now(), 'number');
+      approx(new Date(timer.now()), new Date());
     });
   });
 
@@ -250,7 +250,7 @@ describe('hypertimer', function () {
 
     it('should pause a timeout when the timer is paused', function (done) {
       var timer = new HyperTimer({rate: 1/2});
-      timer.set(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2014,0,1,12,0,0,0));
       var start = new Date();
       var log = [];
 
@@ -258,7 +258,7 @@ describe('hypertimer', function () {
         assert.deepEqual(log, ['A', 'B']);
 
         approx(new Date(), new Date(start.valueOf() + 400));
-        approx(timer.now(), new Date(2014,0,1,12,0,0,100));
+        approx(timer.getTime(), new Date(2014,0,1,12,0,0,100));
         done();
       }, 100);
 
@@ -267,13 +267,13 @@ describe('hypertimer', function () {
         log.push('A');
 
         timer.pause();
-        approx(timer.now(), new Date(2014,0,1,12,0,0,50));
+        approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
         approx(new Date(), new Date(start.valueOf() + 100));
 
         setTimeout(function () {
           log.push('B');
           timer.continue();
-          approx(timer.now(), new Date(2014,0,1,12,0,0,50));
+          approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
           approx(new Date(), new Date(start.valueOf() + 300));
         }, 200);
       }, 100);
@@ -283,15 +283,15 @@ describe('hypertimer', function () {
       var timer = new HyperTimer({rate: 1});
       var start = new Date();
 
-      timer.set(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2014,0,1,12,0,0,0));
 
       timer.setTimeout(function () {
         approx(new Date(), new Date(start.valueOf() + 100));
-        approx(timer.now(), new Date(2014,0,1,12,0,0,200));
+        approx(timer.getTime(), new Date(2014,0,1,12,0,0,200));
         done();
       }, 200);
 
-      timer.set(new Date(2014,0,1,12,0,0,100));
+      timer.setTime(new Date(2014,0,1,12,0,0,100));
     });
 
     it('should adjust a timeout when the timers rate is adjusted', function (done) {
@@ -299,21 +299,21 @@ describe('hypertimer', function () {
       var start = new Date();
       var log = [];
 
-      timer.set(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2014,0,1,12,0,0,0));
 
       timer.setTimeout(function () {
         assert.deepEqual(log, ['A']);
         approx(new Date(), new Date(start.valueOf() + 150));
-        approx(timer.now(), new Date(2014,0,1,12,0,0,100));
+        approx(timer.getTime(), new Date(2014,0,1,12,0,0,100));
         done();
       }, 100);
 
       setTimeout(function () {
-        approx(timer.now(), new Date(2014,0,1,12,0,0,50));
+        approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
 
         timer.config({rate: 1});
 
-        approx(timer.now(), new Date(2014,0,1,12,0,0,50));
+        approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
         log.push('A');
       }, 100)
     });
@@ -322,7 +322,7 @@ describe('hypertimer', function () {
       var timer = new HyperTimer({rate: 1});
       var log = [];
 
-      timer.set(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2014,0,1,12,0,0,0));
 
       var timeout1 = timer.setTimeout(function () {
         log.push('1');
@@ -403,7 +403,7 @@ describe('hypertimer', function () {
       var start = new Date(2014,0,1,12,0,0,0);
       var end   = new Date(2014,0,1,12,0,0,200);
 
-      timer.set(start);
+      timer.setTime(start);
 
       var a = new Date();
       timer.setTrigger(function () {
@@ -417,7 +417,7 @@ describe('hypertimer', function () {
       var start = new Date(2014,0,1,12,0,0,0);
       var end   = new Date(2014,0,1,11,0,0,0);
 
-      timer.set(start);
+      timer.setTime(start);
 
       var a = new Date();
       timer.setTrigger(function () {
@@ -442,18 +442,18 @@ describe('hypertimer', function () {
     // TODO: test clearInterval
   });
 
-  // TODO: test with a numeric time instead of Dates, timer.set(0), rate='discrete', and timeouts like timer.timeout(cb, 1)
+  // TODO: test with a numeric time instead of Dates, timer.setTime(0), rate='discrete', and timeouts like timer.timeout(cb, 1)
 
   it('should get valueOf', function () {
     var timer = new HyperTimer();
     assert(timer.valueOf() instanceof Date);
-    assert.equal(timer.valueOf().valueOf(), timer.now().valueOf());
+    assert.equal(timer.valueOf().valueOf(), timer.getTime().valueOf());
   });
 
   it('should get toString', function () {
     var timer = new HyperTimer();
     assert.strictEqual(typeof timer.toString(), 'string');
-    assert.strictEqual(timer.toString().toString(), timer.now().toString());
+    assert.strictEqual(timer.toString().toString(), timer.getTime().toString());
   });
 
   it('should throw an error when called without new operator', function () {
