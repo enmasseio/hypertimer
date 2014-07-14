@@ -43,6 +43,13 @@ describe('hypertimer', function () {
       assert.equal(timer.config().rate, 10);
     });
 
+    it('should set empty configuration', function () {
+      var timer = new HyperTimer();
+      assert.equal(timer.config().rate, 1);
+      timer.config({});
+      assert.equal(timer.config().rate, 1);
+    });
+
     it('should set configuration on creation', function () {
       var timer = new HyperTimer({rate: 10});
       assert.equal(timer.config().rate, 10);
@@ -66,14 +73,44 @@ describe('hypertimer', function () {
 
   });
 
+  describe('get/set time', function () {
+    it ('should set the current hyper-time from a Date', function () {
+      var timer = new HyperTimer({rate: 1});
+      timer.setTime(new Date(2014, 0, 1));
+      approx(timer.getTime(), new Date(2014, 0, 1));
+    });
+
+    it ('should set the current hyper-time from a number', function () {
+      var timer = new HyperTimer({rate: 1});
+      timer.setTime(new Date(2014, 0, 1).valueOf());
+      approx(timer.getTime(), new Date(2014, 0, 1));
+    });
+
+    it ('should throw an error in case of invalid variable', function () {
+      var timer = new HyperTimer({rate: 1});
+      assert.throws(function () {timer.setTime('bla')}, /Time must be a Date or number/);
+      assert.throws(function () {timer.setTime({})}, /Time must be a Date or number/);
+    });
+
+    it ('should get the current hyper-time as Date', function () {
+      var timer = new HyperTimer({rate: 1});
+      assert(timer.getTime() instanceof Date, 'must return a Date');
+      approx(timer.getTime(), new Date());
+    });
+
+    it ('should get the current hyper-time as number', function () {
+      var timer = new HyperTimer({rate: 1});
+      assert(typeof timer.now(), 'number');
+      approx(new Date(timer.now()), new Date());
+    });
+  });
+
   describe('run', function () {
 
     it('should start running by default', function () {
       var timer = new HyperTimer({rate: 1});
       assert.equal(timer.running, true);
     });
-
-    // TODO: test whether setTime(time) throws an error in case of invalid type of time
 
     it('should test whether running', function () {
       var timer = new HyperTimer({rate: 1});
@@ -149,22 +186,6 @@ describe('hypertimer', function () {
     });
 
   });
-
-  describe('now', function () {
-    it ('should get the current hyper-time as Date', function () {
-      var timer = new HyperTimer({rate: 1});
-      assert(timer.getTime() instanceof Date, 'must return a Date');
-      approx(timer.getTime(), new Date());
-    });
-
-    it ('should get the current hyper-time as number', function () {
-      var timer = new HyperTimer({rate: 1});
-      assert(typeof timer.now(), 'number');
-      approx(new Date(timer.now()), new Date());
-    });
-  });
-
-  // TODO: test set and get
 
   describe('timeout', function () {
 
