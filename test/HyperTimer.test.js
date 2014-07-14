@@ -48,6 +48,16 @@ describe('hypertimer', function () {
       assert.equal(timer.config().rate, 10);
     });
 
+    it('should update configuration', function () {
+      var timer = new HyperTimer({rate: 1});
+      timer.set(new Date(2014,0,1,12,0,0,0));
+      approx(timer.now(), new Date(2014,0,1,12,0,0,0));
+
+      timer.config({rate: 10});
+      assert.equal(timer.config().rate, 10);
+      approx(timer.now(), new Date(2014,0,1,12,0,0,0));
+    });
+
     it('should throw an error on invalid rate', function () {
       assert.throws(function () {
         new HyperTimer({rate: 'bla'});
@@ -154,6 +164,8 @@ describe('hypertimer', function () {
     });
   });
 
+  // TODO: test set and get
+
   describe('timeout', function () {
 
     it('should set a timeout with rate=1', function (done) {
@@ -207,7 +219,186 @@ describe('hypertimer', function () {
       }, Infinity);
     });
 
-    it('should set a timeout with a date', function (done) {
+    it('should execute multiple timeouts in the right order', function (done) {
+      var timer = new HyperTimer({rate: 1/2});
+      var start = new Date();
+      var log = [];
+
+      timer.setTimeout(function () {
+        approx(new Date(), new Date(start.valueOf() + 200));
+
+        log.push('B');
+        assert.deepEqual(log, ['A', 'B']);
+      }, 100);
+
+      timer.setTimeout(function () {
+        approx(new Date(), new Date(start.valueOf() + 300));
+
+        log.push('C');
+        assert.deepEqual(log, ['A', 'B', 'C']);
+
+        done();
+      }, 150);
+
+      timer.setTimeout(function () {
+        approx(new Date(), new Date(start.valueOf() + 100));
+
+        log.push('A');
+        assert.deepEqual(log, ['A']);
+      }, 50);
+    });
+
+    it('should pause a timeout when the timer is paused', function (done) {
+      var timer = new HyperTimer({rate: 1/2});
+      timer.set(new Date(2014,0,1,12,0,0,0));
+      var start = new Date();
+      var log = [];
+
+      timer.setTimeout(function () {
+        assert.deepEqual(log, ['A', 'B']);
+
+        approx(new Date(), new Date(start.valueOf() + 400));
+        approx(timer.now(), new Date(2014,0,1,12,0,0,100));
+        done();
+      }, 100);
+
+      // real-time timeout
+      setTimeout(function () {
+        log.push('A');
+
+        timer.pause();
+        approx(timer.now(), new Date(2014,0,1,12,0,0,50));
+        approx(new Date(), new Date(start.valueOf() + 100));
+
+        setTimeout(function () {
+          log.push('B');
+          timer.continue();
+          approx(timer.now(), new Date(2014,0,1,12,0,0,50));
+          approx(new Date(), new Date(start.valueOf() + 300));
+        }, 200);
+      }, 100);
+    });
+
+    it('should adjust a timeout when the timers time is adjusted', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var start = new Date();
+
+      timer.set(new Date(2014,0,1,12,0,0,0));
+
+      timer.setTimeout(function () {
+        approx(new Date(), new Date(start.valueOf() + 100));
+        approx(timer.now(), new Date(2014,0,1,12,0,0,200));
+        done();
+      }, 200);
+
+      timer.set(new Date(2014,0,1,12,0,0,100));
+    });
+
+    it('should adjust a timeout when the timers rate is adjusted', function (done) {
+      var timer = new HyperTimer({rate: 1/2});
+      var start = new Date();
+      var log = [];
+
+      timer.set(new Date(2014,0,1,12,0,0,0));
+
+      timer.setTimeout(function () {
+        assert.deepEqual(log, ['A']);
+        approx(new Date(), new Date(start.valueOf() + 150));
+        approx(timer.now(), new Date(2014,0,1,12,0,0,100));
+        done();
+      }, 100);
+
+      setTimeout(function () {
+        approx(timer.now(), new Date(2014,0,1,12,0,0,50));
+
+        timer.config({rate: 1});
+
+        approx(timer.now(), new Date(2014,0,1,12,0,0,50));
+        log.push('A');
+      }, 100)
+    });
+
+    it('should cancel a timeout with clearTimeout', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var log = [];
+
+      timer.set(new Date(2014,0,1,12,0,0,0));
+
+      var timeout1 = timer.setTimeout(function () {
+        log.push('1');
+      }, 100);
+
+      var timeout2 = timer.setTimeout(function () {
+        log.push('2');
+        assert(false, 'should not trigger timeout1')
+      }, 150);
+
+      var timeout3 = timer.setTimeout(function () {
+        log.push('3');
+      }, 200);
+
+      setTimeout(function () {
+        timer.clearTimeout(timeout2);
+      }, 50);
+
+      setTimeout(function () {
+        assert.deepEqual(log, ['1', '3']);
+        done();
+      }, 250)
+    });
+  });
+
+  describe.skip('trigger', function () {
+
+    it('should set a trigger with rate=1', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var start = new Date();
+      var time = new Date(new Date().valueOf() + 100);
+
+      timer.setTrigger(function () {
+        approx(new Date(), new Date(start.valueOf() + 100));
+        done();
+      }, time);
+    });
+
+    it('should set a trigger with rate=2', function (done) {
+      var timer = new HyperTimer({rate: 2});
+      var start = new Date();
+      var time = new Date(new Date().valueOf() + 200);
+
+      timer.setTrigger(function () {
+        approx(new Date(), new Date(start.valueOf() + 100));
+        done();
+      }, time);
+    });
+
+    it('should set a trigger with rate=1/2', function (done) {
+      var timer = new HyperTimer({rate: 1/2});
+      var start = new Date();
+      var time = new Date(new Date().valueOf() + 100);
+
+      timer.setTrigger(function () {
+        approx(new Date(), new Date(start.valueOf() + 200));
+        done();
+      }, time);
+    });
+
+    it('should set a trigger with a time in the past', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var start = new Date();
+      var time = new Date(new Date().valueOf() - 100);
+
+      timer.setTrigger(function () {
+        approx(new Date(), start);
+        done();
+      }, time);
+    });
+
+    // TODO: should execute multiple triggers in the right order
+
+    // TODO: test setTrigger with number as input
+
+    it('should set a trigger with a start and end', function (done) {
       var timer = new HyperTimer({rate: 2});
       var start = new Date(2014,0,1,12,0,0,0);
       var end   = new Date(2014,0,1,12,0,0,200);
@@ -215,13 +406,13 @@ describe('hypertimer', function () {
       timer.set(start);
 
       var a = new Date();
-      timer.setTimeout(function () {
+      timer.setTrigger(function () {
         approx(new Date(), new Date(a.valueOf() + 100));
         done();
       }, end);
     });
 
-    it('should set a timeout with a date in the past', function (done) {
+    it('should set a trigger with a start and an end in the past', function (done) {
       var timer = new HyperTimer({rate: 2});
       var start = new Date(2014,0,1,12,0,0,0);
       var end   = new Date(2014,0,1,11,0,0,0);
@@ -229,22 +420,24 @@ describe('hypertimer', function () {
       timer.set(start);
 
       var a = new Date();
-      timer.setTimeout(function () {
+      timer.setTrigger(function () {
         approx(new Date(), a);
         done();
       }, end);
     });
 
-    it.skip('should pause a timeout when the timer is paused', function () {
+    it.skip('should pause a trigger when the timer is paused', function () {
       // TODO
     });
 
-    it.skip('should adjust a timeout when the timers time is adjusted', function () {
+    it.skip('should adjust a trigger when the timers time is adjusted', function () {
       // TODO
     });
 
-    // TODO: test setTimeout
-    // TODO: test clearTimeout
+    // TODO: test clearTrigger
+  });
+
+  describe('interval', function () {
     // TODO: test setInterval
     // TODO: test clearInterval
   });
