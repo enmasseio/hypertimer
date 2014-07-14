@@ -369,7 +369,7 @@ describe('hypertimer', function () {
     });
   });
 
-  describe.skip('trigger', function () {
+  describe('trigger', function () {
 
     it('should set a trigger with rate=1', function (done) {
       var timer = new HyperTimer({rate: 1});
@@ -415,9 +415,38 @@ describe('hypertimer', function () {
       }, time);
     });
 
-    // TODO: should execute multiple triggers in the right order
+    it('should set a trigger with a number as time', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var start = new Date();
+      var time = new Date().valueOf() + 100;
 
-    // TODO: test setTrigger with number as input
+      timer.setTrigger(function () {
+        approx(new Date(), new Date(start.valueOf() + 100));
+        done();
+      }, time);
+    });
+
+    it('should set a trigger with a number in the past as time', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var start = new Date();
+      var time = new Date().valueOf() - 100;
+
+      timer.setTrigger(function () {
+        approx(new Date(), start);
+        done();
+      }, time);
+    });
+
+    it('should set a trigger with an infinite number as time', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var start = new Date();
+      var time = Infinity;
+
+      timer.setTrigger(function () {
+        approx(new Date(), start);
+        done();
+      }, time);
+    });
 
     it('should set a trigger with a start and end', function (done) {
       var timer = new HyperTimer({rate: 2});
@@ -447,15 +476,143 @@ describe('hypertimer', function () {
       }, end);
     });
 
-    it.skip('should pause a trigger when the timer is paused', function () {
-      // TODO
+    it('should execute multiple triggers in the right order', function (done) {
+      var timer = new HyperTimer({rate: 1/2});
+      var start = new Date();
+      var log = [];
+
+      timer.setTime(new Date(2014,0,1,12,0,0,0));
+
+      timer.setTrigger(function () {
+        approx(new Date(), new Date(start.valueOf() + 200));
+
+        log.push('B');
+        assert.deepEqual(log, ['A', 'B']);
+      }, new Date(2014,0,1,12,0,0,100));
+
+      timer.setTrigger(function () {
+        approx(new Date(), new Date(start.valueOf() + 300));
+
+        log.push('C');
+        assert.deepEqual(log, ['A', 'B', 'C']);
+
+        done();
+      }, new Date(2014,0,1,12,0,0,150));
+
+      timer.setTrigger(function () {
+        approx(new Date(), new Date(start.valueOf() + 100));
+
+        log.push('A');
+        assert.deepEqual(log, ['A']);
+      }, new Date(2014,0,1,12,0,0,50));
+
+      assert.deepEqual(timer.timeouts.map(function (timeout) {
+        return timeout.time;
+      }), [
+        new Date(2014,0,1,12,0,0,50).valueOf(),
+        new Date(2014,0,1,12,0,0,100).valueOf(),
+        new Date(2014,0,1,12,0,0,150).valueOf()
+      ])
     });
 
-    it.skip('should adjust a trigger when the timers time is adjusted', function () {
-      // TODO
+    it('should pause a trigger when the timer is paused', function (done) {
+      var timer = new HyperTimer({rate: 1/2});
+      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      var start = new Date();
+      var log = [];
+
+      timer.setTrigger(function () {
+        assert.deepEqual(log, ['A', 'B']);
+
+        approx(new Date(), new Date(start.valueOf() + 400));
+        approx(timer.getTime(), new Date(2014,0,1,12,0,0,100));
+        done();
+      }, new Date(2014,0,1,12,0,0,100));
+
+      // real-time timeout
+      setTimeout(function () {
+        log.push('A');
+
+        timer.pause();
+        approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
+        approx(new Date(), new Date(start.valueOf() + 100));
+
+        setTimeout(function () {
+          log.push('B');
+          timer.continue();
+          approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
+          approx(new Date(), new Date(start.valueOf() + 300));
+        }, 200);
+      }, 100);
     });
 
-    // TODO: test clearTrigger
+    it('should adjust a trigger when the timers time is adjusted', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var start = new Date();
+
+      timer.setTime(new Date(2014,0,1,12,0,0,0));
+
+      timer.setTrigger(function () {
+        approx(new Date(), new Date(start.valueOf() + 100));
+        approx(timer.getTime(), new Date(2014,0,1,12,0,0,200));
+        done();
+      }, new Date(2014,0,1,12,0,0,200));
+
+      timer.setTime(new Date(2014,0,1,12,0,0,100));
+    });
+
+    it('should adjust a trigger when the timers rate is adjusted', function (done) {
+      var timer = new HyperTimer({rate: 1/2});
+      var start = new Date();
+      var log = [];
+
+      timer.setTime(new Date(2014,0,1,12,0,0,0));
+
+      timer.setTrigger(function () {
+        assert.deepEqual(log, ['A']);
+        approx(new Date(), new Date(start.valueOf() + 150));
+        approx(timer.getTime(), new Date(2014,0,1,12,0,0,100));
+        done();
+      }, new Date(2014,0,1,12,0,0,100));
+
+      setTimeout(function () {
+        approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
+
+        timer.config({rate: 1});
+
+        approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
+        log.push('A');
+      }, 100)
+    });
+
+    it('should cancel a trigger with clearTrigger', function (done) {
+      var timer = new HyperTimer({rate: 1});
+      var log = [];
+
+      timer.setTime(new Date(2014,0,1,12,0,0,0));
+
+      var trigger1 = timer.setTrigger(function () {
+        log.push('1');
+      }, new Date(2014,0,1,12,0,0,100));
+
+      var trigger2 = timer.setTrigger(function () {
+        log.push('2');
+        assert(false, 'should not trigger trigger1')
+      }, new Date(2014,0,1,12,0,0,150));
+
+      var trigger3 = timer.setTrigger(function () {
+        log.push('3');
+      }, new Date(2014,0,1,12,0,0,200));
+
+      setTimeout(function () {
+        timer.clearTrigger(trigger2);
+      }, 50);
+
+      setTimeout(function () {
+        assert.deepEqual(log, ['1', '3']);
+        done();
+      }, 250)
+    });
   });
 
   describe('interval', function () {

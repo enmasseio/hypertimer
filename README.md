@@ -22,6 +22,11 @@ Install via bower:
 coming soon...
 
 
+## Roadmap
+
+- Implement a scalable solution to synchronize hypertimers running in different
+  processes.
+
 
 ## Build
 
