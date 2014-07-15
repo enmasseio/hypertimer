@@ -751,6 +751,42 @@ describe('hypertimer', function () {
         }
       }, Infinity);
     });
+
+    it('should correctly update interval when rate changes', function (done) {
+      var timer = hypertimer({rate: 1});
+      var start = new Date();
+
+      timer.setTime(new Date(2014,0,1, 12,0,0, 0));
+
+      var plans = {
+        '1': {realTime: new Date(start.valueOf() + 100), hyperTime: new Date(2014,0,1, 12,0,0, 100), newRate: 2},
+        '2': {realTime: new Date(start.valueOf() + 150), hyperTime: new Date(2014,0,1, 12,0,0, 200), newRate: 1/2},
+        '3': {realTime: new Date(start.valueOf() + 350), hyperTime: new Date(2014,0,1, 12,0,0, 300), newRate: -1},
+        '4': {realTime: new Date(start.valueOf() + 450), hyperTime: new Date(2014,0,1, 12,0,0, 200), newRate: 1},
+        '5': {realTime: new Date(start.valueOf() + 550), hyperTime: new Date(2014,0,1, 12,0,0, 300)}
+      };
+
+      var occurrence = 0;
+      timer.setInterval(function () {
+        occurrence++;
+        var plan = plans[occurrence];
+        try {
+          approx(timer.getTime(), plan.hyperTime);
+          approx(new Date(), plan.realTime);
+        }
+        catch (err) {
+          done(err);
+        }
+
+        if ('newRate' in plan) {
+          timer.config({rate: plan.newRate});
+        }
+        if (!plans[occurrence + 1]) {
+          timer.clear();
+          done();
+        }
+      }, 100);
+    });
   });
 
   // TODO: test with a numeric time instead of "real" Dates, timer.setTime(0), rate='discrete', and timeouts like timer.timeout(cb, 1)
@@ -800,5 +836,7 @@ describe('hypertimer', function () {
     timer.clear();
     assert.deepEqual(timer.list(), []);
   });
+
+  // FIXME: interval stops when switching to negative rate and back
 
 });

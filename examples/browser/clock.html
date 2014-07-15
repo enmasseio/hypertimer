@@ -1,0 +1,131 @@
+<!doctype html>
+<html>
+<head>
+  <title>Time manipulation</title>
+  <script src="../../dist/hypertimer.min.js"></script>
+  <style>
+    body {
+      font-family: verdana, arial, sans serif;
+    }
+    #rateLabel {
+      display: inline-block;
+      min-width: 60px;
+    }
+    #rate {
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+<h3>Time manipulation</h3>
+
+<div>
+  <label for="rate">Rate:</label>
+  <span id="rateLabel"></span>
+  <input id="rate" type="range" min="0" max="1" step="0.05">
+  <label for="backward"><input type="checkbox" id="backward">Backward</label>
+  <label for="pause"><input type="checkbox" id="pause">Pause</label>
+</div>
+<div>
+</div>
+
+<canvas id="clock" width="400" height="400"></canvas>
+
+<script>
+  function drawClock(time) {
+    var canvas = document.getElementById('clock');
+    var ctx = canvas.getContext('2d');
+    ctx.lineCap = 'round';
+
+    var width = parseFloat(canvas.width);
+    var height = parseFloat(canvas.height);
+    var center = {
+      x: width / 2,
+      y: height / 2
+    };
+    var radius = 0.9 * canvas.width / 2;
+
+    // clear canvas
+    ctx.clearRect(0, 0, width, height);
+
+    // clock border
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = '#616161';
+    ctx.beginPath();
+    ctx.arc(center.x, center.y, radius, 0, 2 * Math.PI);
+    ctx.stroke();
+
+    function polarLine(angle, r1, r2, color, width) {
+      ctx.beginPath();
+      ctx.moveTo(center.x + Math.sin(angle) * r1, center.y - Math.cos(angle) * r1);
+      ctx.lineTo(center.x + Math.sin(angle) * r2, center.y - Math.cos(angle) * r2);
+      ctx.strokeStyle = color || '#000000';
+      ctx.lineWidth = width || 1;
+      ctx.stroke();
+    }
+
+    // draw a helper line for each hour
+    for (var hour = 0; hour < 12; hour++) {
+      var angle = hour / 12 * 2 * Math.PI;
+      polarLine(angle, 0.95 * radius, radius, '#616161', 3);
+    }
+
+    // draw hour hand
+    var angleHour = (time.getHours() % 12) / 12 * 2 * Math.PI;
+    polarLine(angleHour, 0, 0.5 * radius, '#000000', 10);
+
+    // draw minute hand
+    var angleMinute = time.getMinutes() / 60 * 2 * Math.PI;
+    polarLine(angleMinute, 0, 0.7 * radius, '#000000', 5);
+
+    // draw second hand
+    var angleSecond = time.getSeconds() / 60 * 2 * Math.PI;
+    polarLine(angleSecond, 0, 0.85 * radius, '#FF0000', 3);
+  }
+
+  // create a hypertimer
+  var timer = hypertimer();
+
+  // set an interval to print the hyper time on screen
+  var interval = 1000; // milliseconds in hyper time
+  timer.setInterval(function () {
+    drawClock(timer.getTime())
+  }, interval);
+
+  var rateRange = document.getElementById('rate');
+  var backward = document.getElementById('backward');
+  var rateLabel = document.getElementById('rateLabel');
+
+  function updateRate() {
+    var x1 = parseFloat(rateRange.min);
+    var x2 = parseFloat(rateRange.max);
+    var y1 = 0.01;
+    var y2 = 100;
+    var b = Math.log (y1 / y2) / (x1 - x2);
+    var a = y1 / Math.exp(b * x1);
+
+    var x = parseFloat(rateRange.value);
+    var y = a * Math.exp(b * x);
+    var rate = Math.round(y * 100) / 100 * (backward.checked ? -1 : 1);
+    timer.config({rate: rate});
+
+    drawClock(timer.getTime());
+    rateLabel.innerHTML = rate;
+  }
+
+  document.getElementById('rate').onchange = updateRate;
+  document.getElementById('backward').onchange = updateRate;
+  document.getElementById('pause').onchange = function () {
+    if (this.checked) {
+      timer.pause();
+    }
+    else {
+      timer.continue();
+    }
+  };
+
+  updateRate();
+
+</script>
+</body>
+</html>
