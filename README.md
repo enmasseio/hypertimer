@@ -103,101 +103,78 @@ var timer = hypertimer({rate: 10});
 
 ### Methods
 
-- **`clear()`**
-
+- **`clear()`**  
   Clear all running timeouts.
 
-- **`clearTimeout(timeoutId: number)`**
-  
+- **`clearTimeout(timeoutId: number)`**  
   Cancel a timeout.
 
-- **`clearInterval(intervalId: number)`**
-  
+- **`clearInterval(intervalId: number)`**  
   Cancel an interval.
 
-- **`clearTrigger(triggerId: number)`**
-  
+- **`clearTrigger(triggerId: number)`**  
   Cancel a trigger.
 
-- **`config([options: Object]): Object`**
-
+- **`config([options: Object]): Object`**  
   Change the configuration options of the hypertimer, and/or retrieve the current configuration. Available options:
-  - `rate: Number` 
 
+  - `rate: Number`  
     The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. By default, rate is 1. Note that rate can even be a negative number.
 
-- **`continue()`**
-
+- **`continue()`**  
   Continue the timer when paused. The state of the timer can be retrieved via the property `running`. See also `pause()`.
 
-- **`getTime(): Date`**
-
+- **`getTime(): Date`**  
   Returns the current time of the timer as Date. See also `now()`.
   The time can be set using `setTime(time)`.
 
-- **`list()`**
-
+- **`list()`**  
   Returns a list with the id's of all running timeouts.
   
-- **`now() : number`**
-
+- **`now() : number`**  
   Returns the current time of the timer as a number. See also `getTime()`.
 
-- **`pause()`**
-
+- **`pause()`**  
   Pause the timer. The state of the timer can be retrieved via the property `running`. See also `continue()`.
 
-- **`setInterval(callback: Function, interval: number [, firstTime: Date | number])`**
-
+- **`setInterval(callback: Function, interval: number [, firstTime: Date | number])`**  
   Trigger a callback every interval. Optionally, a start date can be provided
   to specify the first time the callback must be triggered. The function returns an intervalId which can be used to cancel the trigger using `clearInterval()`. See also `setTimeout` and `setTrigger`. Parameters:
   
-  - `callback: Function`
-    
+  - `callback: Function`  
     Function executed when delay is exceeded.
     
-  - `interval: number`
-  
+  - `interval: number`  
     Interval in milliseconds. When interval is smaller than zero or is infinity, the interval will be set to zero and triggered with a maximum rate.
     
-  - `[firstTime: Date | number]` 
-  
+  - `[firstTime: Date | number]`  
     An optional absolute moment in time (Date) when the callback will be triggered the first time. By default, `firstTime = now() + interval`.
 
-- **`setTime(time: number | Date)`**
-
+- **`setTime(time: number | Date)`**  
   Set the current time of the timer. Can be a Date or a timestamp. To get the current time, use `getTime()` or `now()`.
 
-- **`setTimeout(callback: Function, delay: number) : number`**
-
+- **`setTimeout(callback: Function, delay: number) : number`**  
   Set a timeout, which is triggered when the timeout occurs in hyper-time. See also `setTrigger` and `setInterval`. The function returns a timeoutId, which can be used to cancel the timeout using `clearTimeout(timeoutId)`. The parameters are:
   
-  - `callback: Function`
-  
+  - `callback: Function`  
     Function executed when the delay is exceeded
     
-  - `delay: number`
-  
+  - `delay: number`  
     The delay in milliseconds. When the rate is zero, or the delay is smaller or equal to zero, the callback is triggered immediately.
 
-- **`setTrigger(callback: Function, time: Date | number) : number`**
-
+- **`setTrigger(callback: Function, time: Date | number) : number`**  
   Set a trigger, which is triggered when the timeout occurs in hyper-time. See also `getTimeout`. The function returns a triggerId which can be used to cancel the trigger using `clearTrigger()`. The parameters are:
 
-  - `callback: Function` 
-  
+  - `callback: Function`  
     Function executed when delay is exceeded.
     
-  - `time: Date | number`
-  
+  - `time: Date | number`  
     An absolute moment in time (Date) when the callback will be triggered. When the rate is zero, or the date is a Date in the past, the callback is triggered immediately.
     
-- **`toString() : String`**
-
+- **`toString() : String`**  
   Return a string representation of the current hyper-time, equal to `timer.getTime().toString()`.
   
-- **`valueOf() : Date`**
-
+- **`valueOf() : Date`**  
   Get the value of the hypertimer, returns the current time of the timer as Date.
 
 
