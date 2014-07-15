@@ -1,16 +1,19 @@
 {
   "name": "hypertimer",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "A timer running faster or slower than real-time, in continuous or discrete time",
   "author": "Jos de Jong <wjosdejong@gmail.com> (https://github.com/josdejong)",
   "main": "./index",
   "keywords": [
     "timer",
     "time",
-    "real-time",
+    "simulation",
     "hypertime",
+    "hyper-time",
+    "real-time",
     "continuous",
-    "discrete"
+    "discrete",
+    "event"
   ],
   "repository": {
     "type": "git",

@@ -5,7 +5,7 @@
  * A timer running faster or slower than real-time, and in continuous or
  * discrete time.
  *
- * @version 0.0.1
+ * @version 0.1.0
  * @date    2014-07-15
  *
  * @license
@@ -98,7 +98,7 @@ return /******/ (function(modules) { // webpackBootstrap
   /**
    * Create a new hypertimer
    * @param {Object} [options]  The following options are available:
-   *                            rate: Number The rate of speed of hyper time with
+   *                            rate: number The rate of speed of hyper time with
    *                                         respect to real-time in milliseconds
    *                                         per millisecond. By default, rate
    *                                         is 1. Note that rate can even be a
@@ -123,11 +123,12 @@ return /******/ (function(modules) { // webpackBootstrap
      * Change configuration options of the hypertimer, or retrieve current
      * configuration.
      * @param {Object} [options]  The following options are available:
-     *                            rate: Number The rate of speed of hyper time with
-     *                                         respect to real-time in milliseconds
-     *                                         per millisecond. By default, rate
-     *                                         is 1. Note that rate can even be a
-     *                                         negative number.
+     *                            rate: number  The rate (in milliseconds per
+     *                                          millisecond) at which the timer
+     *                                          runs, with respect to real-time
+     *                                          speed. By default, rate is 1.
+     *                                          Note that rate can even be a
+     *                                          negative number.
      * @return {Object} Returns the applied configuration
      */
     timer.config = function(options) {
@@ -155,7 +156,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
     /**
      * Set the time of the timer. To get the current time, use getTime() or now().
-     * @param {Number | Date} time  The time in hyper-time.
+     * @param {number | Date} time  The time in hyper-time.
      */
     timer.setTime = function (time) {
       if (time instanceof Date) {
@@ -174,7 +175,7 @@ return /******/ (function(modules) { // webpackBootstrap
     };
 
     /**
-     * Returns the current time of the timer in hyper-time as a number.
+     * Returns the current time of the timer as a number.
      * See also getTime().
      * @return {number} The time
      */
@@ -214,7 +215,7 @@ return /******/ (function(modules) { // webpackBootstrap
     };
 
     /**
-     * Returns the current time of the timer in hyper-time as Date.
+     * Returns the current time of the timer as Date.
      * See also now().
      * @return {Date} The time
      */
@@ -238,7 +239,7 @@ return /******/ (function(modules) { // webpackBootstrap
     };
 
     /**
-     * Set a timeout, which is triggered after a delay is expired in hyper-time.
+     * Set a timeout, which is triggered when the timeout occurs in hyper-time.
      * See also setTrigger.
      * @param {Function} callback   Function executed when delay is exceeded.
      * @param {number} delay        The delay in milliseconds. When the rate is
@@ -269,9 +270,9 @@ return /******/ (function(modules) { // webpackBootstrap
     };
 
     /**
-     * Set a trigger, which is triggered after a delay is expired in hyper-time.
+     * Set a trigger, which is triggered when the timeout occurs in hyper-time.
      * See also getTimeout.
-     * @param {Function} callback   Function executed when delay is exceeded.
+     * @param {Function} callback   Function executed when timeout occurs.
      * @param {Date | number} time  An absolute moment in time (Date) when the
      *                              callback will be triggered. When the rate is
      *                              zero, or the date is a Date in the past,
@@ -312,7 +313,7 @@ return /******/ (function(modules) { // webpackBootstrap
      *                                    with a maximum rate.
      * @param {Date | number} [firstTime] An absolute moment in time (Date) when the
      *                                    callback will be triggered the first time.
-     *                                    By default, start = now() + interval.
+     *                                    By default, firstTime = now() + interval.
      * @return {number} Returns a intervalId which can be used to cancel the
      *                  trigger using clearInterval().
      */
@@ -473,11 +474,11 @@ return /******/ (function(modules) { // webpackBootstrap
           // reschedule intervals
           for (var i = 0; i < intervals.length; i++) {
             timeout = intervals[i];
-            // TODO: adding the interval each occurrence will give round-off errors.
-            //       however, when multliplying the firstTime with the number of occurrences,
-            //       we cannot easily swith the rate at any time.
+            // FIXME: adding the interval each occurrence will give round-off errors.
+            //        however, when multliplying the firstTime with the number of occurrences,
+            //        we cannot easily swith the rate at any time.
             //timeout.occurrence++;
-            //timeout.time = timeout.firstTime + timeout.interval * timeout.occurrence;
+            //timeout.time = timeout.firstTime + timeout.interval * timeout.occurrence * (rate < 0 ? -1 : 1);
             timeout.time += timeout.interval * (rate < 0 ? -1 : 1);
             _queueTimeout(timeout);
           }

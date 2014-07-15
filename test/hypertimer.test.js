@@ -59,12 +59,12 @@ describe('hypertimer', function () {
 
     it('should update configuration', function () {
       var timer = hypertimer({rate: 1});
-      timer.setTime(new Date(2014,0,1,12,0,0,0));
-      approx(timer.getTime(), new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2050,0,1,12,0,0,0));
+      approx(timer.getTime(), new Date(2050,0,1,12,0,0,0));
 
       timer.config({rate: 10});
       assert.equal(timer.config().rate, 10);
-      approx(timer.getTime(), new Date(2014,0,1,12,0,0,0));
+      approx(timer.getTime(), new Date(2050,0,1,12,0,0,0));
     });
 
     it('should throw an error on invalid rate', function () {
@@ -78,14 +78,14 @@ describe('hypertimer', function () {
   describe('get/set time', function () {
     it ('should set the current hyper-time from a Date', function () {
       var timer = hypertimer({rate: 1});
-      timer.setTime(new Date(2014, 0, 1));
-      approx(timer.getTime(), new Date(2014, 0, 1));
+      timer.setTime(new Date(2050, 0, 1));
+      approx(timer.getTime(), new Date(2050, 0, 1));
     });
 
     it ('should set the current hyper-time from a number', function () {
       var timer = hypertimer({rate: 1});
-      timer.setTime(new Date(2014, 0, 1).valueOf());
-      approx(timer.getTime(), new Date(2014, 0, 1));
+      timer.setTime(new Date(2050, 0, 1).valueOf());
+      approx(timer.getTime(), new Date(2050, 0, 1));
     });
 
     it ('should throw an error in case of invalid variable', function () {
@@ -142,7 +142,7 @@ describe('hypertimer', function () {
     });
 
     it('should set a new time via set', function () {
-      var d = new Date(2014,0,1);
+      var d = new Date(2050,0,1);
       var timer = hypertimer({rate: 1});
 
       approx(timer.getTime(), new Date());
@@ -152,7 +152,7 @@ describe('hypertimer', function () {
     });
 
     it('time should not change when paused', function (done) {
-      var d = new Date(2014,0,1);
+      var d = new Date(2050,0,1);
       var timer = hypertimer({rate: 1});
 
       timer.setTime(d);
@@ -272,7 +272,7 @@ describe('hypertimer', function () {
 
     it('should pause a timeout when the timer is paused', function (done) {
       var timer = hypertimer({rate: 1/2});
-      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2050,0,1,12,0,0,0));
       var start = new Date();
       var log = [];
 
@@ -280,7 +280,7 @@ describe('hypertimer', function () {
         assert.deepEqual(log, ['A', 'B']);
 
         approx(new Date(), new Date(start.valueOf() + 400));
-        approx(timer.getTime(), new Date(2014,0,1,12,0,0,100));
+        approx(timer.getTime(), new Date(2050,0,1,12,0,0,100));
         done();
       }, 100);
 
@@ -289,13 +289,13 @@ describe('hypertimer', function () {
         log.push('A');
 
         timer.pause();
-        approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
+        approx(timer.getTime(), new Date(2050,0,1,12,0,0,50));
         approx(new Date(), new Date(start.valueOf() + 100));
 
         setTimeout(function () {
           log.push('B');
           timer.continue();
-          approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
+          approx(timer.getTime(), new Date(2050,0,1,12,0,0,50));
           approx(new Date(), new Date(start.valueOf() + 300));
         }, 200);
       }, 100);
@@ -305,15 +305,15 @@ describe('hypertimer', function () {
       var timer = hypertimer({rate: 1});
       var start = new Date();
 
-      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       timer.setTimeout(function () {
         approx(new Date(), new Date(start.valueOf() + 100));
-        approx(timer.getTime(), new Date(2014,0,1,12,0,0,200));
+        approx(timer.getTime(), new Date(2050,0,1,12,0,0,200));
         done();
       }, 200);
 
-      timer.setTime(new Date(2014,0,1,12,0,0,100));
+      timer.setTime(new Date(2050,0,1,12,0,0,100));
     });
 
     it('should adjust a timeout when the timers rate is adjusted', function (done) {
@@ -321,21 +321,21 @@ describe('hypertimer', function () {
       var start = new Date();
       var log = [];
 
-      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       timer.setTimeout(function () {
         assert.deepEqual(log, ['A']);
         approx(new Date(), new Date(start.valueOf() + 150));
-        approx(timer.getTime(), new Date(2014,0,1,12,0,0,100));
+        approx(timer.getTime(), new Date(2050,0,1,12,0,0,100));
         done();
       }, 100);
 
       setTimeout(function () {
-        approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
+        approx(timer.getTime(), new Date(2050,0,1,12,0,0,50));
 
         timer.config({rate: 1});
 
-        approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
+        approx(timer.getTime(), new Date(2050,0,1,12,0,0,50));
         log.push('A');
       }, 100)
     });
@@ -344,7 +344,7 @@ describe('hypertimer', function () {
       var timer = hypertimer({rate: 1});
       var log = [];
 
-      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       var timeout1 = timer.setTimeout(function () {
         log.push('1');
@@ -464,8 +464,8 @@ describe('hypertimer', function () {
 
     it('should set a trigger with a start and end', function (done) {
       var timer = hypertimer({rate: 2});
-      var start = new Date(2014,0,1,12,0,0,0);
-      var end   = new Date(2014,0,1,12,0,0,200);
+      var start = new Date(2050,0,1,12,0,0,0);
+      var end   = new Date(2050,0,1,12,0,0,200);
 
       timer.setTime(start);
 
@@ -478,8 +478,8 @@ describe('hypertimer', function () {
 
     it('should set a trigger with a start and an end in the past', function (done) {
       var timer = hypertimer({rate: 2});
-      var start = new Date(2014,0,1,12,0,0,0);
-      var end   = new Date(2014,0,1,11,0,0,0);
+      var start = new Date(2050,0,1,12,0,0,0);
+      var end   = new Date(2050,0,1,11,0,0,0);
 
       timer.setTime(start);
 
@@ -495,14 +495,14 @@ describe('hypertimer', function () {
       var start = new Date();
       var log = [];
 
-      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       var triggerB = timer.setTrigger(function () {
         approx(new Date(), new Date(start.valueOf() + 200));
 
         log.push('B');
         assert.deepEqual(log, ['A', 'B']);
-      }, new Date(2014,0,1,12,0,0,100));
+      }, new Date(2050,0,1,12,0,0,100));
 
       var triggerC = timer.setTrigger(function () {
         approx(new Date(), new Date(start.valueOf() + 300));
@@ -511,21 +511,21 @@ describe('hypertimer', function () {
         assert.deepEqual(log, ['A', 'B', 'C']);
 
         done();
-      }, new Date(2014,0,1,12,0,0,150));
+      }, new Date(2050,0,1,12,0,0,150));
 
       var triggerA = timer.setTrigger(function () {
         approx(new Date(), new Date(start.valueOf() + 100));
 
         log.push('A');
         assert.deepEqual(log, ['A']);
-      }, new Date(2014,0,1,12,0,0,50));
+      }, new Date(2050,0,1,12,0,0,50));
 
       assert.deepEqual(timer.list(), [triggerA, triggerB, triggerC]);
     });
 
     it('should pause a trigger when the timer is paused', function (done) {
       var timer = hypertimer({rate: 1/2});
-      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2050,0,1,12,0,0,0));
       var start = new Date();
       var log = [];
 
@@ -533,22 +533,22 @@ describe('hypertimer', function () {
         assert.deepEqual(log, ['A', 'B']);
 
         approx(new Date(), new Date(start.valueOf() + 400));
-        approx(timer.getTime(), new Date(2014,0,1,12,0,0,100));
+        approx(timer.getTime(), new Date(2050,0,1,12,0,0,100));
         done();
-      }, new Date(2014,0,1,12,0,0,100));
+      }, new Date(2050,0,1,12,0,0,100));
 
       // real-time timeout
       setTimeout(function () {
         log.push('A');
 
         timer.pause();
-        approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
+        approx(timer.getTime(), new Date(2050,0,1,12,0,0,50));
         approx(new Date(), new Date(start.valueOf() + 100));
 
         setTimeout(function () {
           log.push('B');
           timer.continue();
-          approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
+          approx(timer.getTime(), new Date(2050,0,1,12,0,0,50));
           approx(new Date(), new Date(start.valueOf() + 300));
         }, 200);
       }, 100);
@@ -558,15 +558,15 @@ describe('hypertimer', function () {
       var timer = hypertimer({rate: 1});
       var start = new Date();
 
-      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       timer.setTrigger(function () {
         approx(new Date(), new Date(start.valueOf() + 100));
-        approx(timer.getTime(), new Date(2014,0,1,12,0,0,200));
+        approx(timer.getTime(), new Date(2050,0,1,12,0,0,200));
         done();
-      }, new Date(2014,0,1,12,0,0,200));
+      }, new Date(2050,0,1,12,0,0,200));
 
-      timer.setTime(new Date(2014,0,1,12,0,0,100));
+      timer.setTime(new Date(2050,0,1,12,0,0,100));
     });
 
     it('should adjust a trigger when the timers rate is adjusted', function (done) {
@@ -574,21 +574,21 @@ describe('hypertimer', function () {
       var start = new Date();
       var log = [];
 
-      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       timer.setTrigger(function () {
         assert.deepEqual(log, ['A']);
         approx(new Date(), new Date(start.valueOf() + 150));
-        approx(timer.getTime(), new Date(2014,0,1,12,0,0,100));
+        approx(timer.getTime(), new Date(2050,0,1,12,0,0,100));
         done();
-      }, new Date(2014,0,1,12,0,0,100));
+      }, new Date(2050,0,1,12,0,0,100));
 
       setTimeout(function () {
-        approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
+        approx(timer.getTime(), new Date(2050,0,1,12,0,0,50));
 
         timer.config({rate: 1});
 
-        approx(timer.getTime(), new Date(2014,0,1,12,0,0,50));
+        approx(timer.getTime(), new Date(2050,0,1,12,0,0,50));
         log.push('A');
       }, 100)
     });
@@ -597,20 +597,20 @@ describe('hypertimer', function () {
       var timer = hypertimer({rate: 1});
       var log = [];
 
-      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       var trigger1 = timer.setTrigger(function () {
         log.push('1');
-      }, new Date(2014,0,1,12,0,0,100));
+      }, new Date(2050,0,1,12,0,0,100));
 
       var trigger2 = timer.setTrigger(function () {
         log.push('2');
         assert(false, 'should not trigger trigger1')
-      }, new Date(2014,0,1,12,0,0,150));
+      }, new Date(2050,0,1,12,0,0,150));
 
       var trigger3 = timer.setTrigger(function () {
         log.push('3');
-      }, new Date(2014,0,1,12,0,0,200));
+      }, new Date(2050,0,1,12,0,0,200));
 
       setTimeout(function () {
         timer.clearTrigger(trigger2);
@@ -645,9 +645,9 @@ describe('hypertimer', function () {
       var timer = hypertimer({rate: 1});
       var start = new Date();
 
-      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
-      var firstTime = new Date(2014,0,1,12,0,0,300);
+      var firstTime = new Date(2050,0,1,12,0,0,300);
       var occurrence = 0;
       var interval = timer.setInterval(function () {
         occurrence++;
@@ -665,9 +665,9 @@ describe('hypertimer', function () {
       var timer = hypertimer({rate: 1});
       var start = new Date();
 
-      timer.setTime(new Date(2014,0,1,12,0,0,0));
+      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
-      var firstTime = new Date(2014,0,1,12,0,0,300);
+      var firstTime = new Date(2050,0,1,12,0,0,300);
       var occurrence = 0;
       var interval = timer.setInterval(function () {
         occurrence++;
@@ -716,9 +716,9 @@ describe('hypertimer', function () {
 
     it('should set a negative interval with firstTime', function (done) {
       var timer = hypertimer({rate: 1});
-      var timerStart = new Date(2014,0,1,12,0,0,0);
+      var timerStart = new Date(2050,0,1,12,0,0,0);
       var realStart = new Date(new Date().valueOf() + 200);
-      var firstStart = new Date(2014,0,1,12,0,0,200);
+      var firstStart = new Date(2050,0,1,12,0,0,200);
 
       timer.setTime(timerStart);
 
@@ -756,14 +756,14 @@ describe('hypertimer', function () {
       var timer = hypertimer({rate: 1});
       var start = new Date();
 
-      timer.setTime(new Date(2014,0,1, 12,0,0, 0));
+      timer.setTime(new Date(2050,0,1, 12,0,0, 0));
 
       var plans = {
-        '1': {realTime: new Date(start.valueOf() + 100), hyperTime: new Date(2014,0,1, 12,0,0, 100), newRate: 2},
-        '2': {realTime: new Date(start.valueOf() + 150), hyperTime: new Date(2014,0,1, 12,0,0, 200), newRate: 1/2},
-        '3': {realTime: new Date(start.valueOf() + 350), hyperTime: new Date(2014,0,1, 12,0,0, 300), newRate: -1},
-        '4': {realTime: new Date(start.valueOf() + 450), hyperTime: new Date(2014,0,1, 12,0,0, 200), newRate: 1},
-        '5': {realTime: new Date(start.valueOf() + 550), hyperTime: new Date(2014,0,1, 12,0,0, 300)}
+        '1': {realTime: new Date(start.valueOf() + 100), hyperTime: new Date(2050,0,1, 12,0,0, 100), newRate: 2},
+        '2': {realTime: new Date(start.valueOf() + 150), hyperTime: new Date(2050,0,1, 12,0,0, 200), newRate: 1/2},
+        '3': {realTime: new Date(start.valueOf() + 350), hyperTime: new Date(2050,0,1, 12,0,0, 300), newRate: -1},
+        '4': {realTime: new Date(start.valueOf() + 450), hyperTime: new Date(2050,0,1, 12,0,0, 200), newRate: 1},
+        '5': {realTime: new Date(start.valueOf() + 550), hyperTime: new Date(2050,0,1, 12,0,0, 300)}
       };
 
       var occurrence = 0;
