@@ -1,6 +1,6 @@
 {
   "name": "hypertimer",
-  "version": "0.1.0",
+  "version": "0.2.0-SNAPSHOT",
   "description": "A timer running faster or slower than real-time, in continuous or discrete time",
   "author": "Jos de Jong <wjosdejong@gmail.com> (https://github.com/josdejong)",
   "main": "./index",

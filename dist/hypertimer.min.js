@@ -5,7 +5,7 @@
  * A timer running faster or slower than real-time, and in continuous or
  * discrete time.
  *
- * @version 0.1.0
+ * @version 0.2.0-SNAPSHOT
  * @date    2014-07-15
  *
  * @license
