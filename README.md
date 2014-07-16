@@ -85,9 +85,9 @@ By default, a new hypertimer runs with real-time speed and time.
 
 Available options:
 
-Name | Type   | Default | Description
----- | ------ | ------- | -----------
-rate | Number | 1       | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive or negative value.
+Name | Type                 | Default | Description
+---- | -------------------- | ------- | -----------
+rate | Number or 'discrete' | 1       | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be 'discrete' to run in discrete time.
 
 Example:
 
@@ -117,8 +117,8 @@ var timer = hypertimer({rate: 10});
 - **`config([options: Object]): Object`**  
   Change the configuration options of the hypertimer, and/or retrieve the current configuration. Available options:
 
-  - `rate: Number`  
-    The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. By default, rate is 1. Note that rate can even be a negative number.
+  - `rate: Number | 'discrete'`  
+    The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be 'discrete' to run in discrete time. By default, rate is 1. 
 
 - **`continue()`**  
   Continue the timer when paused. The state of the timer can be retrieved via the property `running`. See also `pause()`.
@@ -186,9 +186,8 @@ https://github.com/enmasseio/hypertimer/tree/master/examples
 
 ## Roadmap
 
-- Implement support for discrete time (discrete, deterministic events).
-- Implement a scalable solution to synchronize hypertimers running in different
-  processes.
+- Implement a scalable solution to synchronize hypertimers running in different processes.
+- Use high precision timers and time functions.
 
 
 ## Build

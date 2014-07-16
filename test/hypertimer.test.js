@@ -789,6 +789,79 @@ describe('hypertimer', function () {
     });
   });
 
+  describe('discrete', function () {
+
+    it('should run a series of events in discrete time', function (done) {
+      var timer = hypertimer({rate: 'discrete'});
+      var start = new Date();
+      var logs = [];
+
+      timer.setTime(new Date(2050,0,1, 12,0,0));
+
+      timer.setTimeout(function () {
+        logs.push('A');
+        try {
+          var time = timer.getTime();
+          assert.deepEqual(time, new Date(2050,0,1, 12,0,1));
+        }
+        catch (err) {
+          done(err);
+        }
+
+        timer.setTimeout(function () {
+          logs.push('B');
+          try {
+            assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,3));
+          }
+          catch(err) {
+            done(err)
+          }
+        }, 2000);
+
+        timer.setTimeout(function () {
+          logs.push('C');
+          try {
+            assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,2));
+          }
+          catch (err) {
+            done(err);
+          }
+
+          timer.setTimeout(function () {
+            logs.push('E');
+            try {
+              assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,3));
+
+              assert.deepEqual(logs, ['A', 'C', 'D', 'B', 'E']);
+              approx(new Date(), start);
+
+              done();
+            }
+            catch (err) {
+              done(err);
+            }
+          }, 1000);
+
+        }, 1000);
+
+        timer.setTimeout(function () {
+          logs.push('D');
+          try {
+            assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,2));
+          }
+          catch (err) {
+            done(err);
+          }
+        }, 1000);
+
+      }, 1000);
+
+    });
+
+    // TODO: test async discrete events
+
+  });
+
   // TODO: test with a numeric time instead of "real" Dates, timer.setTime(0), rate='discrete', and timeouts like timer.timeout(cb, 1)
 
   it('should get valueOf', function () {
@@ -836,7 +909,5 @@ describe('hypertimer', function () {
     timer.clear();
     assert.deepEqual(timer.list(), []);
   });
-
-  // FIXME: interval stops when switching to negative rate and back
 
 });

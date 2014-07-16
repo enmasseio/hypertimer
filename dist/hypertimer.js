@@ -6,7 +6,7 @@
  * discrete time.
  *
  * @version 0.2.0-SNAPSHOT
- * @date    2014-07-15
+ * @date    2014-07-16
  *
  * @license
  * Copyright (C) 2014 Almende B.V., http://almende.com
@@ -95,14 +95,17 @@ return /******/ (function(modules) { // webpackBootstrap
     TRIGGER: 2
   };
 
+  var DISCRETE = 'discrete';
+
   /**
    * Create a new hypertimer
    * @param {Object} [options]  The following options are available:
-   *                            rate: number The rate of speed of hyper time with
-   *                                         respect to real-time in milliseconds
-   *                                         per millisecond. By default, rate
-   *                                         is 1. Note that rate can even be a
-   *                                         negative number.
+   *                            rate: number | 'discrete'
+   *                                        The rate of speed of hyper time with
+   *                                        respect to real-time in milliseconds
+   *                                        per millisecond. Can be 'discrete' to
+   *                                        run in discrete time (jumping from
+   *                                        event to event). By default, rate is 1.
    */
   function hypertimer(options) {
     // options
@@ -123,22 +126,21 @@ return /******/ (function(modules) { // webpackBootstrap
      * Change configuration options of the hypertimer, or retrieve current
      * configuration.
      * @param {Object} [options]  The following options are available:
-     *                            rate: number  The rate (in milliseconds per
-     *                                          millisecond) at which the timer
-     *                                          runs, with respect to real-time
-     *                                          speed. By default, rate is 1.
-     *                                          Note that rate can even be a
-     *                                          negative number.
+     *                            rate: number | 'discrete'
+     *                                        The rate of speed of hyper time with
+     *                                        respect to real-time in milliseconds
+     *                                        per millisecond. Can be 'discrete' to
+     *                                        run in discrete time (jumping from
+     *                                        event to event). By default, rate is 1.
      * @return {Object} Returns the applied configuration
      */
     timer.config = function(options) {
       if (options) {
         if ('rate' in options) {
-          var newRate = Number(options.rate);
-          if (isNaN(newRate)) {
-            throw new TypeError('rate must be a number');
+          var newRate = (options.rate === DISCRETE) ? DISCRETE : Number(options.rate);
+          if (newRate !== DISCRETE && isNaN(newRate)) {
+            throw new TypeError('rate must be a number or string "discrete"');
           }
-          // TODO: add option rate='discrete'
           hyperTime = timer.now();
           realTime = util.nowReal();
           rate = newRate;
@@ -180,14 +182,19 @@ return /******/ (function(modules) { // webpackBootstrap
      * @return {number} The time
      */
     timer.now = function () {
-      if (running) {
-        // TODO: implement performance.now() / process.hrtime(time) for high precision calculation of time interval
-        var realInterval = util.nowReal() - realTime;
-        var hyperInterval = realInterval * rate;
-        return hyperTime + hyperInterval;
+      if (rate === DISCRETE) {
+        return hyperTime;
       }
       else {
-        return hyperTime;
+        if (running) {
+          // TODO: implement performance.now() / process.hrtime(time) for high precision calculation of time interval
+          var realInterval = util.nowReal() - realTime;
+          var hyperInterval = realInterval * rate;
+          return hyperTime + hyperInterval;
+        }
+        else {
+          return hyperTime;
+        }
       }
     };
 
@@ -447,9 +454,15 @@ return /******/ (function(modules) { // webpackBootstrap
         // schedule next timeout
         var time = next.time;
         var delay = time - timer.now();
-        var realDelay = delay / rate;
+        var realDelay = (rate === DISCRETE) ? 0 : delay / rate;
 
         function trigger() {
+          // when running in discrete time, update the hyperTime to the time
+          // of the current event
+          if (rate === DISCRETE) {
+            hyperTime = time;
+          }
+
           // execute all expired timeouts
           var intervals = [];
           while (timeouts.length > 0  &&
@@ -472,14 +485,15 @@ return /******/ (function(modules) { // webpackBootstrap
           }
 
           // reschedule intervals
+          var sign = (rate === DISCRETE || rate >= 0) ? 1 : -1;
           for (var i = 0; i < intervals.length; i++) {
             timeout = intervals[i];
             // FIXME: adding the interval each occurrence will give round-off errors.
-            //        however, when multliplying the firstTime with the number of occurrences,
-            //        we cannot easily swith the rate at any time.
+            //        however, when multiplying the firstTime with the number of occurrences,
+            //        we cannot easily switch the rate at any time.
             //timeout.occurrence++;
-            //timeout.time = timeout.firstTime + timeout.interval * timeout.occurrence * (rate < 0 ? -1 : 1);
-            timeout.time += timeout.interval * (rate < 0 ? -1 : 1);
+            //timeout.time = timeout.firstTime + timeout.interval * timeout.occurrence * sign;
+            timeout.time += timeout.interval * sign;
             _queueTimeout(timeout);
           }
 
