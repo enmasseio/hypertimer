@@ -998,6 +998,53 @@ describe('hypertimer', function () {
       }, 5000);
     });
 
+    it('should add timeouts in an async timeout in deterministic order', function (testDone) {
+      // The real-time delay for creation of timeout C is larger than that for creating timeout D,
+      // so the test would fail if A and B where executed in parallel
+      var timer = hypertimer({rate: 'discrete'});
+      var logs = [];
+
+      timer.setTime(new Date(2050,0,1, 12,0,0));
+
+      timer.setTimeout(function (done) {
+        logs.push('A');
+        assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,5));
+
+        setTimeout(function () {
+          timer.setTimeout(function () {
+            logs.push('C');
+            assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,10));
+          }, 5000);
+
+          done();
+        }, 100);
+
+      }, 5000);
+
+      timer.setTimeout(function (done) {
+        logs.push('B');
+        assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,5));
+
+        // here we do an async action inside a timeout's callback
+        setTimeout(function () {
+          timer.setTimeout(function () {
+            logs.push('D');
+            try {
+              assert.deepEqual(logs, ['A', 'B', 'C', 'D']);
+              assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,10));
+              testDone();
+            }
+            catch (err) {
+              testDone(err);
+            }
+          }, 5000);
+
+          done();
+        }, 50);
+
+      }, 5000);
+    });
+
   });
 
   // TODO: test with a numeric time instead of "real" Dates, timer.setTime(0), rate='discrete', and timeouts like timer.timeout(cb, 1)

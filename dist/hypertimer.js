@@ -116,6 +116,7 @@ return /******/ (function(modules) { // webpackBootstrap
     var realTime = null;   // timestamp. the moment in real-time when hyperTime was set
     var hyperTime = null;  // timestamp. the start time in hyper-time
     var timeouts = [];     // array with all running timeouts
+    var current = {};      // the timeouts currently in progress (callback is being executed)
     var timeoutId = null;  // currently running timer
     var idSeq = 0;         // counter for unique timeout id's
 
@@ -369,6 +370,12 @@ return /******/ (function(modules) { // webpackBootstrap
      * @param {number} timeoutId   The id of a timeout
      */
     timer.clearTimeout = function(timeoutId) {
+      // test whether timeout is currently being executed
+      if (current[timeoutId]) {
+        delete current[timeoutId];
+        return;
+      }
+
       // find the timeout in the queue
       for (var i = 0; i < timeouts.length; i++) {
         if (timeouts[i].id === timeoutId) {
@@ -405,6 +412,7 @@ return /******/ (function(modules) { // webpackBootstrap
      */
     timer.clear = function () {
       // empty the queue
+      current = {};
       timeouts = [];
 
       // reschedule
@@ -414,25 +422,69 @@ return /******/ (function(modules) { // webpackBootstrap
     /**
      * Add a timeout to the queue. After the queue has been changed, the queue
      * must be rescheduled by executing _reschedule()
-     * @param {{type: number, time: number, callback: Function}} params
+     * @param {{id: number, type: number, time: number, callback: Function}} timeout
      * @private
      */
-    function _queueTimeout(params) {
+    function _queueTimeout(timeout) {
       // insert the new timeout at the right place in the array, sorted by time
       if (timeouts.length > 0) {
         var i = timeouts.length - 1;
-        while (i >= 0 && timeouts[i].time > params.time) {
+        while (i >= 0 && timeouts[i].time > timeout.time) {
           i--;
         }
 
         // insert the new timeout in the queue. Note that the timeout is
         // inserted *after* existing timeouts with the exact *same* time,
         // so the order in which they are executed is deterministic
-        timeouts.splice(i + 1, 0, params);
+        timeouts.splice(i + 1, 0, timeout);
       }
       else {
         // queue is empty, append the new timeout
-        timeouts.push(params);
+        timeouts.push(timeout);
+      }
+    }
+
+    /**
+     * Execute a timeout
+     * @param {{id: number, type: number, time: number, callback: function}} timeout
+     * @param {function} [callback]
+     *             The callback is executed when the timeout's callback is
+     *             finished. Called without parameters
+     * @private
+     */
+    function _execTimeout(timeout, callback) {
+      // store the timeout in the queue with timeouts in progress
+      // it can be cleared when a clearTimeout is executed inside the callback
+      current[timeout.id] = timeout;
+
+      function finish() {
+        // in case of an interval we have to reschedule on next cycle
+        // interval must not be cleared while executing the callback
+        if (timeout.type === TYPE.INTERVAL && current[timeout.id]) {
+          var sign = (rate === DISCRETE || rate >= 0) ? 1 : -1;
+          timeout.time += timeout.interval * sign;
+          _queueTimeout(timeout);
+        }
+
+        // remove the timeout from the queue with timeouts in progress
+        delete current[timeout.id];
+
+        if (typeof callback === 'function') callback();
+      }
+
+      // execute the callback
+      try {
+        if (timeout.callback.length == 0) {
+          // synchronous timeout,  like `timer.setTimeout(function () {...}, delay)`
+          timeout.callback();
+          finish();
+        } else {
+          // asynchronous timeout, like `timer.setTimeout(function (done) {...; done(); }, delay)`
+          timeout.callback(finish);
+        }
+      } catch (err) {
+        // silently ignore errors thrown by the callback
+        finish();
       }
     }
 
@@ -441,7 +493,13 @@ return /******/ (function(modules) { // webpackBootstrap
      * @private
      */
     function _schedule() {
-      var timeout;
+      // do not _schedule when there are timeouts in progress
+      // this can be the case with async timeouts in discrete time.
+      // _schedule will be executed again when all async timeouts are finished.
+      if (rate === DISCRETE && Object.keys(current).length > 0) {
+        return;
+      }
+
       var next = timeouts[0];
 
       // cancel timer when running
@@ -456,52 +514,49 @@ return /******/ (function(modules) { // webpackBootstrap
         var delay = time - timer.now();
         var realDelay = (rate === DISCRETE) ? 0 : delay / rate;
 
-        function trigger() {
+        function onTimeout() {
           // when running in discrete time, update the hyperTime to the time
           // of the current event
           if (rate === DISCRETE) {
             hyperTime = time;
           }
 
+          // grab all expired timeouts from the queue
+          var i = 0;
+          while (i < timeouts.length && ((timeouts[i].time <= time) || !isFinite(timeouts[i].time))) {
+            i++;
+          }
+          var expired = timeouts.splice(0, i);
+          // note: expired.length can never be zero (on every change of the queue, we reschedule)
+
           // execute all expired timeouts
-          var intervals = [];
-          while (timeouts.length > 0  &&
-              ((timeouts[0].time <= time) || !isFinite(timeouts[0].time))) {
-            timeout = timeouts[0];
-
-            // execute the callback
-            try {
-              timeout.callback();
-            } catch (err) {
-              // silently ignore errors thrown by the callback
+          if (rate === DISCRETE) {
+            // in discrete time, we execute all expired timeouts serially,
+            // and wait for their completion in order to guarantee deterministic
+            // order of execution
+            function next() {
+              var timeout = expired.shift();
+              if (timeout) {
+                _execTimeout(timeout, next);
+              }
+              else {
+                // schedule the next round
+                _schedule();
+              }
             }
-
-            // in case of an interval we have to reschedule on next cycle
-            if (timeout.type === TYPE.INTERVAL && timeouts[0] === timeout) {
-              // timeout is not removed inside the callback, reschedule it
-              intervals.push(timeout);
-            }
-            timeouts.shift();
+            next();
           }
+          else {
+            // in continuous time, we fire all timeouts in parallel,
+            // and don't await their completion (they can do async operations)
+            expired.forEach(_execTimeout);
 
-          // reschedule intervals
-          var sign = (rate === DISCRETE || rate >= 0) ? 1 : -1;
-          for (var i = 0; i < intervals.length; i++) {
-            timeout = intervals[i];
-            // FIXME: adding the interval each occurrence will give round-off errors.
-            //        however, when multiplying the firstTime with the number of occurrences,
-            //        we cannot easily switch the rate at any time.
-            //timeout.occurrence++;
-            //timeout.time = timeout.firstTime + timeout.interval * timeout.occurrence * sign;
-            timeout.time += timeout.interval * sign;
-            _queueTimeout(timeout);
+            // schedule the next round
+            _schedule();
           }
-
-          // initialize next round of timeouts
-          _schedule();
         }
 
-        timeoutId = setTimeout(trigger, realDelay);
+        timeoutId = setTimeout(onTimeout, realDelay);
       }
     }
 
