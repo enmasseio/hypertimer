@@ -103,7 +103,8 @@ return /******/ (function(modules) { // webpackBootstrap
    *                            rate: number | 'discrete'
    *                                        The rate of speed of hyper time with
    *                                        respect to real-time in milliseconds
-   *                                        per millisecond. Can be 'discrete' to
+   *                                        per millisecond. Rate must be a
+   *                                        positive number, or 'discrete' to
    *                                        run in discrete time (jumping from
    *                                        event to event). By default, rate is 1.
    */
@@ -130,7 +131,8 @@ return /******/ (function(modules) { // webpackBootstrap
      *                            rate: number | 'discrete'
      *                                        The rate of speed of hyper time with
      *                                        respect to real-time in milliseconds
-     *                                        per millisecond. Can be 'discrete' to
+     *                                        per millisecond. Rate must be a
+     *                                        positive number, or 'discrete' to
      *                                        run in discrete time (jumping from
      *                                        event to event). By default, rate is 1.
      * @return {Object} Returns the applied configuration
@@ -139,8 +141,8 @@ return /******/ (function(modules) { // webpackBootstrap
       if (options) {
         if ('rate' in options) {
           var newRate = (options.rate === DISCRETE) ? DISCRETE : Number(options.rate);
-          if (newRate !== DISCRETE && isNaN(newRate)) {
-            throw new TypeError('rate must be a number or string "discrete"');
+          if (newRate !== DISCRETE && (isNaN(newRate) || newRate <= 0)) {
+            throw new TypeError('rate must be a positive number or the string "discrete"');
           }
           hyperTime = timer.now();
           realTime = util.nowReal();
@@ -250,9 +252,9 @@ return /******/ (function(modules) { // webpackBootstrap
      * Set a timeout, which is triggered when the timeout occurs in hyper-time.
      * See also setTrigger.
      * @param {Function} callback   Function executed when delay is exceeded.
-     * @param {number} delay        The delay in milliseconds. When the rate is
-     *                              zero, or the delay is smaller or equal to
-     *                              zero, the callback is triggered immediately.
+     * @param {number} delay        The delay in milliseconds. When the delay is
+     *                              smaller or equal to zero, the callback is
+     *                              triggered immediately.
      * @return {number} Returns a timeoutId which can be used to cancel the
      *                  timeout using clearTimeout().
      */
@@ -282,9 +284,9 @@ return /******/ (function(modules) { // webpackBootstrap
      * See also getTimeout.
      * @param {Function} callback   Function executed when timeout occurs.
      * @param {Date | number} time  An absolute moment in time (Date) when the
-     *                              callback will be triggered. When the rate is
-     *                              zero, or the date is a Date in the past,
-     *                              the callback is triggered immediately.
+     *                              callback will be triggered. When the date is
+     *                              a Date in the past, the callback is triggered
+     *                              immediately.
      * @return {number} Returns a triggerId which can be used to cancel the
      *                  trigger using clearTrigger().
      */
@@ -461,8 +463,7 @@ return /******/ (function(modules) { // webpackBootstrap
         // in case of an interval we have to reschedule on next cycle
         // interval must not be cleared while executing the callback
         if (timeout.type === TYPE.INTERVAL && current[timeout.id]) {
-          var sign = (rate === DISCRETE || rate >= 0) ? 1 : -1;
-          timeout.time += timeout.interval * sign;
+          timeout.time += timeout.interval;
           _queueTimeout(timeout);
         }
 

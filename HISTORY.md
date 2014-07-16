@@ -4,6 +4,7 @@
 ## not yet released, version 0.2.0
 
 - Implemented support for discrete time.
+- Removed support for negative rates.
 
 
 ## 2014-07-15, version 0.1.0

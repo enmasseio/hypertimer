@@ -23,7 +23,6 @@
   <label for="rate">Rate:</label>
   <span id="rateLabel"></span>
   <input id="rate" type="range" min="0" max="1" step="0.05">
-  <label for="backward"><input type="checkbox" id="backward">Backward</label>
   <label for="pause"><input type="checkbox" id="pause">Pause</label>
 </div>
 <div>
@@ -93,7 +92,6 @@
   }, interval);
 
   var rateRange = document.getElementById('rate');
-  var backward = document.getElementById('backward');
   var rateLabel = document.getElementById('rateLabel');
 
   function updateRate() {
@@ -106,7 +104,7 @@
 
     var x = parseFloat(rateRange.value);
     var y = a * Math.exp(b * x);
-    var rate = Math.round(y * 100) / 100 * (backward.checked ? -1 : 1);
+    var rate = Math.round(y * 100) / 100;
     timer.config({rate: rate});
 
     drawClock(timer.getTime());
@@ -114,7 +112,6 @@
   }
 
   document.getElementById('rate').onchange = updateRate;
-  document.getElementById('backward').onchange = updateRate;
   document.getElementById('pause').onchange = function () {
     if (this.checked) {
       timer.pause();

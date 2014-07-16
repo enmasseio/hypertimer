@@ -70,7 +70,7 @@ describe('hypertimer', function () {
     it('should throw an error on invalid rate', function () {
       assert.throws(function () {
         hypertimer({rate: 'bla'});
-      }, /TypeError: rate must be a number/);
+      }, /TypeError: rate must be a positive number/);
     });
 
   });
@@ -171,7 +171,7 @@ describe('hypertimer', function () {
       // To keep the test fast, don't see a rate too large, else you have to
       // increase the delay to compensate for possible round-off errors and
       // inaccuracy of the real-time.
-      var rates = [1, 2, 1/2, -1, -2, 0];
+      var rates = [1, 2, 4, 1/2];
       var epsilon = 20;
 
       async.map(rates, function (rate, cb) {
@@ -868,9 +868,8 @@ describe('hypertimer', function () {
       var plans = {
         '1': {realTime: new Date(start.valueOf() + 100), hyperTime: new Date(2050,0,1, 12,0,0, 100), newRate: 2},
         '2': {realTime: new Date(start.valueOf() + 150), hyperTime: new Date(2050,0,1, 12,0,0, 200), newRate: 1/2},
-        '3': {realTime: new Date(start.valueOf() + 350), hyperTime: new Date(2050,0,1, 12,0,0, 300), newRate: -1},
-        '4': {realTime: new Date(start.valueOf() + 450), hyperTime: new Date(2050,0,1, 12,0,0, 200), newRate: 1},
-        '5': {realTime: new Date(start.valueOf() + 550), hyperTime: new Date(2050,0,1, 12,0,0, 300)}
+        '3': {realTime: new Date(start.valueOf() + 350), hyperTime: new Date(2050,0,1, 12,0,0, 300), newRate: 1},
+        '4': {realTime: new Date(start.valueOf() + 450), hyperTime: new Date(2050,0,1, 12,0,0, 400)}
       };
 
       var occurrence = 0;

@@ -89,7 +89,7 @@ Available options:
 
 Name | Type                 | Default | Description
 ---- | -------------------- | ------- | -----------
-rate | Number or 'discrete' | 1       | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be 'discrete' to run in discrete time.
+rate | Number or 'discrete' | 1       | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string 'discrete' to run in discrete time.
 
 Example:
 
@@ -120,7 +120,7 @@ var timer = hypertimer({rate: 10});
   Change the configuration options of the hypertimer, and/or retrieve the current configuration. Available options:
 
   - `rate: Number | 'discrete'`  
-    The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be 'discrete' to run in discrete time. By default, rate is 1. 
+    The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or 'discrete' to run in discrete time. By default, rate is 1. 
 
 - **`continue()`**  
   Continue the timer when paused. The state of the timer can be retrieved via the property `running`. See also `pause()`.
@@ -161,7 +161,7 @@ var timer = hypertimer({rate: 10});
     Function executed when the delay is exceeded
     
   - `delay: number`  
-    The delay in milliseconds. When the rate is zero, or the delay is smaller or equal to zero, the callback is triggered immediately.
+    The delay in milliseconds. When the delay is smaller or equal to zero, the callback is triggered immediately.
 
 - **`setTrigger(callback: Function, time: Date | number) : number`**  
   Set a trigger, which is triggered when the timeout occurs in hyper-time. See also `getTimeout`. The function returns a triggerId which can be used to cancel the trigger using `clearTrigger()`. The parameters are:
@@ -170,7 +170,7 @@ var timer = hypertimer({rate: 10});
     Function executed when delay is exceeded.
     
   - `time: Date | number`  
-    An absolute moment in time (Date) when the callback will be triggered. When the rate is zero, or the date is a Date in the past, the callback is triggered immediately.
+    An absolute moment in time (Date) when the callback will be triggered. When the date is a Date in the past, the callback is triggered immediately.
     
 - **`toString() : String`**  
   Return a string representation of the current hyper-time, equal to `timer.getTime().toString()`.
