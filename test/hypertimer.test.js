@@ -681,18 +681,71 @@ describe('hypertimer', function () {
       }, 100, firstTime.valueOf());
     });
 
-    it('should clear an interval', function (done) {
+    it('should clear an interval using clearInterval', function (done) {
       var timer = hypertimer({rate: 1});
 
       var interval = timer.setInterval(function () {
         assert(false, 'should not trigger interval')
-      }, 100);
+      }, 50);
 
       timer.clearInterval(interval);
       assert.deepEqual(timer.list(), []);
 
       // wait until the time where the interval should have been triggered
       setTimeout(function () {
+        done();
+      }, 150);
+    });
+
+    it('should clear an interval using clearInterval inside the intervals callback', function (done) {
+      var timer = hypertimer({rate: 1});
+
+      var counter = 0;
+      var interval = timer.setInterval(function () {
+        timer.clearInterval(interval);
+        assert.deepEqual(timer.list(), []);
+
+        counter++;
+      }, 50);
+
+
+      // wait until the time where the interval should have been triggered
+      setTimeout(function () {
+        assert.equal(counter, 1);
+        done();
+      }, 150);
+    });
+
+    it('should clear an interval using clear', function (done) {
+      var timer = hypertimer({rate: 1});
+
+      timer.setInterval(function () {
+        assert(false, 'should not trigger interval')
+      }, 50);
+
+      timer.clear();
+      assert.deepEqual(timer.list(), []);
+
+      // wait until the time where the interval should have been triggered
+      setTimeout(function () {
+        done();
+      }, 150);
+    });
+
+    it('should clear an interval using clear inside the intervals callback', function (done) {
+      var timer = hypertimer({rate: 1});
+
+      var counter = 0;
+      timer.setInterval(function () {
+        timer.clear();
+        assert.deepEqual(timer.list(), []);
+
+        counter++;
+      }, 50);
+
+      // wait until the time where the interval should have been triggered
+      setTimeout(function () {
+        assert.equal(counter, 1);
         done();
       }, 200);
     });
@@ -750,6 +803,41 @@ describe('hypertimer', function () {
           done();
         }
       }, Infinity);
+    });
+
+    it('should correctly update interval when a timeout in the past is inserted', function (done) {
+      var timer = hypertimer({rate: 1});
+      var start = new Date();
+      var logs = [];
+
+      var first = true;
+      timer.setInterval(function () {
+        try {
+          logs.push('A');
+          if (first) {
+            first = false;
+            approx(new Date(), new Date(start.valueOf() + 100));
+            approx(timer.getTime(), new Date(start.valueOf() + 100));
+
+            timer.setTrigger(function () {
+              logs.push('B');
+              approx(new Date(), new Date(start.valueOf() + 100));
+              approx(timer.getTime(), new Date(start.valueOf() + 100));
+            }, new Date(start.valueOf() -100));
+          }
+          else {
+            assert.deepEqual(logs, ['A', 'B', 'A']);
+            approx(new Date(), new Date(start.valueOf() + 200));
+            approx(timer.getTime(), new Date(start.valueOf() + 200));
+
+            timer.clear();
+            done();
+          }
+        }
+        catch(err) {
+          done(err);
+        }
+      }, 100);
     });
 
     it('should correctly update interval when rate changes', function (done) {

@@ -10,6 +10,8 @@ Hypertimer offers basic functionality to control time:
 
 These functions are compatible with JavaScript's built-in functions `Date.now()`, `setTimeout()`, and `setInterval()`, but there is an important difference: they can run with a different current time and at a different rate.
 
+Hypertimer runs on node.js and on any modern browser (Chrome, FireFox, Opera, Safari, IE9+).
+
 
 ## Install
 
