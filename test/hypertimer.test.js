@@ -965,7 +965,38 @@ describe('hypertimer', function () {
 
     });
 
-    // TODO: test async discrete events
+    it('should run an async timeout in discrete time', function (testDone) {
+      var timer = hypertimer({rate: 'discrete'});
+
+      timer.setTime(new Date(2050,0,1, 12,0,0));
+
+      timer.setTimeout(function (done) {
+        try {
+          assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,5));
+        }
+        catch (err) {
+          done(err);
+        }
+
+        // here we do an async action inside a timeout's callback
+        setTimeout(function () {
+          timer.setTimeout(function () {
+            try {
+              assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,10));
+            }
+            catch (err) {
+              testDone(err);
+            }
+
+            testDone();
+          }, 5000);
+
+          // we are done now with the first timeout
+          done();
+        }, 100);
+
+      }, 5000);
+    });
 
   });
 
