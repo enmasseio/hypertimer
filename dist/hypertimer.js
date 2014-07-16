@@ -354,10 +354,10 @@ return /******/ (function(modules) { // webpackBootstrap
       _queueTimeout({
         id: id,
         type: TYPE.INTERVAL,
-        time: timestamp,
         interval: _interval,
-        //firstTime: timestamp,
-        //occurrence: 0,
+        time: timestamp,
+        firstTime: timestamp,
+        occurrence: 0,
         callback: callback
       });
 
@@ -463,7 +463,8 @@ return /******/ (function(modules) { // webpackBootstrap
         // in case of an interval we have to reschedule on next cycle
         // interval must not be cleared while executing the callback
         if (timeout.type === TYPE.INTERVAL && current[timeout.id]) {
-          timeout.time += timeout.interval;
+          timeout.occurrence++;
+          timeout.time = timeout.firstTime + timeout.occurrence * timeout.interval;
           _queueTimeout(timeout);
         }
 
