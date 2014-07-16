@@ -1,7 +1,7 @@
 {
   "name": "hypertimer",
   "version": "0.2.0-SNAPSHOT",
-  "description": "A timer running faster or slower than real-time, in continuous or discrete time",
+  "description": "Time control for simulations",
   "author": "Jos de Jong <wjosdejong@gmail.com> (https://github.com/josdejong)",
   "main": "./index",
   "keywords": [
@@ -13,6 +13,7 @@
     "real-time",
     "continuous",
     "discrete",
+    "deterministic",
     "event"
   ],
   "repository": {

@@ -1,15 +1,14 @@
 hypertimer
 ==========
 
-Hypertimer is a timer running in [hypertime](http://en.wikipedia.org/wiki/Hypertime), at a different rate than [real-time](http://en.wikipedia.org/wiki/Real-time_clock), or in discrete time. Hypertimer is useful for controlling the time in simulations.
+Hypertimer offers time control for simulations. With simulations, it's important to be able to manipulate the time. Typically, simulations are run in discrete time, jumping from event to event in a deterministic manner. And afterwards, a simulation can be played back in continuous time at a faster or slower pace than real-time (depending on the time scale of the simulation). In short, one needs to be able to run a simulation in [hypertime](http://en.wikipedia.org/wiki/Hypertime). 
 
-Hypertimer offers basic functionality to get the time and set timeouts:
+Hypertimer offers basic functionality to control time:
 
-- `getTime()`, `setTime()`, and `now()`, to get and set the time of the timer. 
-- `setTimeout()`, `setInterval()`, and `setTrigger()` to set timeouts.
+- Get and set the time using functions `getTime()`, `setTime()`, and `now()`. 
+- Schedule events using functions `setTimeout()`, `setInterval()`, and `setTrigger()`.
 
-These functions are similar to and compatible with JavaScripts built-in functions `Date.now()`,
-`setTimeout()`, and `setInterval()`, but there is an important difference: they can run with a different current time and at a different rate.
+These functions are compatible with JavaScript's built-in functions `Date.now()`, `setTimeout()`, and `setInterval()`, but there is an important difference: they can run with a different current time and at a different rate.
 
 
 ## Install

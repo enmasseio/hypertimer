@@ -1,7 +1,7 @@
 {
   "name": "hypertimer",
   "version": "0.2.0-SNAPSHOT",
-  "description": "A timer running faster or slower than real-time, in continuous or discrete time.",
+  "description": "Time control for simulations",
   "homepage": "https://github.com/enmasseio/hypertimer",
   "repository": {
     "type": "git",
