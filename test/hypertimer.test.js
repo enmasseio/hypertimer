@@ -241,6 +241,25 @@ describe('hypertimer', function () {
       }, Infinity);
     });
 
+    // TODO:
+
+    it('should continue scheduling when the first timeout is cancelled', function (done) {
+      var timer = hypertimer({rate: 1});
+      var start = new Date();
+
+      var t1 = timer.setTimeout(function () {
+        done(new Error('Should not trigger cancelled error'))
+      }, 100);
+      var t2 = timer.setTimeout(function () {
+        approx(new Date(), new Date(start.valueOf() + 150));
+        done();
+      }, 150);
+
+      // t1 is now scheduled as first next timeout
+      timer.clearTimeout(t1);
+      // t2 should now be scheduled as first next timeout
+    });
+
     it('should execute multiple timeouts in the right order', function (done) {
       var timer = hypertimer({rate: 1/2});
       var start = new Date();
