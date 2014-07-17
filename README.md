@@ -53,25 +53,179 @@ timer.setTime(new Date(2014, 0, 1));
 
 ## Use
 
-The following example shows how to create a hypertimer and set a timeout.
+### Configuring a hypertimer
+
+A hypertimer can run in continuous or discrete time, and can run faster or slower than real-time. The speed of a hypertimer can be configured via the option `rate`, which can be a positive number (to run in continuous time) or the string `'discrete'` (to run in discrete time).
+
+```js
+// create a hypertimer running ten times faster than real-time
+var timer1 = hypertimer({rate: 10});
+
+// retrieve the current configuration
+console.log(timer1.config());  // returns an Object {rate: 10}
+
+// create a hypertimer with the default rate (1 by default)
+var timer2 = hypertimer();
+
+// adjust the rate later on
+timer2.config({rate: 1/2});
+
+// create a hypertimer running in discrete time (time will jump
+// from scheduled event to scheduled event)
+var timer3 = hypertimer({rate: 'discrete'});
+```
+
+### Getting and setting time
+
+Hypertimer offers functions to get and set time:
+
+```js
+var timer = hypertimer();
+
+// set the time at 1st of January 2050
+timer.setTime(new Date(2050, 0, 1, 12, 0, 0));
+
+// get the time as Date
+console.log(timer.getTime());  // Returns a date, Sat Jan 01 2050 12:00:00 GMT+0100 (CET)
+
+// get the time as timestamp
+console.log(timer.now());      // Returns a number, 2524647600000
+```
+
+### Pausing the time
+
+The time in a hypertimer can be paused. All scheduled timeouts will be paused
+as well, and are automatically continued when the timer is running again.
+
+```js
+var timer = hypertimer();
+
+// pause the timer
+timer.pause();
+
+// time stands still here...
+console.log(timer.running);  // false
+
+// continue again
+timer.continue();
+
+// time is running again
+console.log(timer.running);  // true
+```
+
+### Schedule events
+
+Hypertimer has three functions to schedule events:
+
+- `setTimeout(callback, delay)`  
+  Schedule a callback after a delay in milliseconds.
+- `setTrigger(callback, time)`  
+  Schedule a callback at a specific time. Time can be a Date or a number (timestamp).
+- `setInterval(callback, interval [, firstTime])`  
+  Schedule a callback to be triggered once every interval. `interval` is a number in milliseconds. Optionally, a `firstTime` can be provided.
+
+On creation, the trigger time of the events is calculated from the `delay`, `interval`, and/or `firstTime`, and the event is scheduled to occur at that moment in time. When the time of the hypertimer is changed via `setTime()`, trigger time of running timeouts will not be adjusted.
+
+The functions `setTimeout()`, `setTrigger()`, and `setInterval()` return a timeout id, which can be used to cancel a timeout using the functions `clearTimeout()`, `clearTrigger()`, and `clearInterval()` respectively. To cancel all scheduled events at once, the function `clear()` can be called.
 
 ```js
 // create a hypertimer running ten times faster than real-time
 var timer = hypertimer({rate: 10});
 
-// start the timer at 1st of January 2020
-timer.setTime(new Date(2020, 0, 1, 12, 0, 0));
+// start the timer at 1st of January 2050
+timer.setTime(new Date(2050, 0, 1, 12, 0, 0));
+
+console.log('start', timer.getTime());      // start Sat Jan 01 2050 12:00:00 GMT+0100 (CET)
 
 // set a timeout after a delay
 var delay = 10000; // milliseconds (hyper-time)
-timer.setTimeout(function () {
-  console.log('Timeout!');
-  console.log('It is now ' + delay + ' ms later in hyper-time, ' +
-      'the time is: ' + timer.getTime());
+var id1 = timer.setTimeout(function () {
+  console.log('timeout', timer.getTime());  // timeout Sat Jan 01 2050 12:00:10 GMT+0100 (CET)
 }, delay);
 
-console.log('The time is: ' + timer.getTime());
+// set a timeout at a specific time
+var time = new Date(2050, 0, 1, 12, 0, 20); // time (hyper-time)
+var id2 = timer.setTrigger(function () {
+  console.log('trigger', timer.getTime());  // trigger Sat Jan 01 2050 12:00:20 GMT+0100 (CET)
+}, time);
+
+// set an interval
+var interval = 5000; // milliseconds (hyper-time)
+var firstTime = new Date(2050, 0, 1, 12, 0, 30); // optional first time (hyper-time)
+var counter = 0;
+var id3 = timer.setInterval(function () {
+  console.log('interval', timer.getTime()); // interval, 12:00:30, 12:00:35, 12:00:40, etc ...
+  
+  // cancel the interval after 10 times 
+  counter++;
+  if (counter > 10) {
+    timer.clearInterval(id3);
+  }
+}, interval, firstTime);
 ```
+
+### Discrete time
+
+When running in continuous time (rate is a positive number), scheduled events are triggered at their scheduled time (in hyper-time). When running a simulation, there is no need to wait and do nothing between scheduled events. It is much faster to jump from event to event in discrete time. To create a hypertimer running in discrete time, configure rate as `'discrete'`. Hypertimer ensures that all scheduled events are executed in a deterministic order.
+
+In the example below, the application will immediately output 'done!' and not after a delay of 10 seconds, because the timer is running in discrete time and immediately jumps to the first next event.
+
+```js
+// create a hypertimer running in discrete time,
+var timer = hypertimer({rate: 'discrete'});
+
+var delay = 10000;
+timer.setTimeout(function () {
+  console.log('Timeout A');
+  
+  timer.setTimeout(function () {
+    console.log('Timeout B');
+  }, delay);
+}, delay);
+
+// Will immediately output:
+//   Timeout A
+//   Timeout B
+```
+
+When performing asynchronous tasks inside a timeout, one needs to create an asynchronous timeout, which calls `done()` when all asynchronous actions are finished. This is required in order to guarantee a deterministic order of execution.
+
+```js
+// asynchronous timeout
+timer.setTimeout(function (done) {
+  // ... do something
+  done(); // call done when done
+}, delay);
+```
+An example of using an asynchronous timeout:
+
+```js
+// create a hypertimer running in discrete time,
+// jumping from scheduled event to scheduled event.
+var timer = hypertimer({rate: 'discrete'});
+
+// create an asynchronous timeout, having a callback parameter done
+timer.setTimeout(function (done) {
+  console.log('Timeout A');
+
+  // perform an asynchronous action inside the timeout
+  someAsyncAction(param, function (err, result) {
+    timer.setTimeout(function () {
+      console.log('Timeout B');
+    }, 10000);
+
+    // once we are done with our asynchronous event, call done()
+    // so the hypertimer knows he can continue with a next event.
+    done();
+  });
+}, 10000);
+
+// Output:
+//   Timeout A
+//   (async action is executed here)
+//   Timeout B
+```
+
 
 ## API
 
