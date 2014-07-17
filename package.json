@@ -1,17 +1,15 @@
 {
   "name": "hypertimer",
-  "version": "0.2.0-SNAPSHOT",
+  "version": "1.0.0",
   "description": "Time control for simulations",
   "author": "Jos de Jong <wjosdejong@gmail.com> (https://github.com/josdejong)",
   "main": "./index",
   "keywords": [
-    "timer",
     "time",
+    "control",
     "simulation",
+    "timer",
     "hypertime",
-    "hyper-time",
-    "real-time",
-    "continuous",
     "discrete",
     "deterministic",
     "event"

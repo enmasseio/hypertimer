@@ -1,10 +1,11 @@
 # History
 
 
-## not yet released, version 0.2.0
+## 2014-07-17, version 1.0.0
 
-- Implemented support for discrete time.
+- Implemented support for (async) discrete time.
 - Removed support for negative rates.
+- Added more docs and examples.
 
 
 ## 2014-07-15, version 0.1.0
