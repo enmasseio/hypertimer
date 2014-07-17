@@ -1,6 +1,6 @@
 {
   "name": "hypertimer",
-  "version": "1.0.1-SNAPSHOT",
+  "version": "1.1.0-SNAPSHOT",
   "description": "Time control for simulations",
   "author": "Jos de Jong <wjosdejong@gmail.com> (https://github.com/josdejong)",
   "main": "./index",
@@ -26,6 +26,7 @@
     "gulp-util": "^2.2.20",
     "istanbul": "^0.2.6",
     "mocha": "^1.18.2",
+    "seed-random": "^2.2.0",
     "uglify-js": "^2.4.15",
     "uglifyjs": "^2.3.6",
     "webpack": "^1.3.1-beta8"

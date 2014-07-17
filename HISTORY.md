@@ -1,6 +1,11 @@
 # History
 
 
+## not yet released, version 1.1.0
+
+- Added support for non-deterministic execution of events.
+
+
 ## 2014-07-17, version 1.0.0
 
 - Implemented support for (async) discrete time.

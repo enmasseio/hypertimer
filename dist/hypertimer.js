@@ -5,7 +5,7 @@
  * A timer running faster or slower than real-time, and in continuous or
  * discrete time.
  *
- * @version 1.0.1-SNAPSHOT
+ * @version 1.1.0-SNAPSHOT
  * @date    2014-07-17
  *
  * @license
@@ -107,10 +107,14 @@ return /******/ (function(modules) { // webpackBootstrap
    *                                        positive number, or 'discrete' to
    *                                        run in discrete time (jumping from
    *                                        event to event). By default, rate is 1.
+   *                            deterministic: boolean
+   *                                        If true (default), simultaneous events
+   *                                        are executed in a deterministic order.
    */
   function hypertimer(options) {
     // options
     var rate = 1;             // number of milliseconds per milliseconds
+    var deterministic = true; // run simultaneous events in a deterministic order
 
     // properties
     var running = false;   // true when running
@@ -135,6 +139,9 @@ return /******/ (function(modules) { // webpackBootstrap
      *                                        positive number, or 'discrete' to
      *                                        run in discrete time (jumping from
      *                                        event to event). By default, rate is 1.
+     *                            deterministic: boolean
+     *                                        If true (default), simultaneous events
+     *                                        are executed in a deterministic order.
      * @return {Object} Returns the applied configuration
      */
     timer.config = function(options) {
@@ -148,6 +155,9 @@ return /******/ (function(modules) { // webpackBootstrap
           realTime = util.nowReal();
           rate = newRate;
         }
+        if ('deterministic' in options) {
+          deterministic = options.deterministic ? true : false;
+        }
       }
 
       // reschedule running timeouts
@@ -155,7 +165,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
       // return a copy of the configuration options
       return {
-        rate: rate
+        rate: rate,
+        deterministic: deterministic
       };
     };
 
@@ -491,6 +502,29 @@ return /******/ (function(modules) { // webpackBootstrap
     }
 
     /**
+     * Remove all timeouts occurring before or on the provided time from the
+     * queue and return them.
+     * @param {number} time    A timestamp
+     * @returns {Array} returns an array containing all expired timeouts
+     * @private
+     */
+    function _getExpiredTimeouts(time) {
+      var i = 0;
+      while (i < timeouts.length && ((timeouts[i].time <= time) || !isFinite(timeouts[i].time))) {
+        i++;
+      }
+      var expired = timeouts.splice(0, i);
+
+      if (deterministic == false) {
+        // the array with expired timeouts is in deterministic order
+        // shuffle them
+        util.shuffle(expired);
+      }
+
+      return expired;
+    }
+
+    /**
      * Reschedule all queued timeouts
      * @private
      */
@@ -524,11 +558,7 @@ return /******/ (function(modules) { // webpackBootstrap
           }
 
           // grab all expired timeouts from the queue
-          var i = 0;
-          while (i < timeouts.length && ((timeouts[i].time <= time) || !isFinite(timeouts[i].time))) {
-            i++;
-          }
-          var expired = timeouts.splice(0, i);
+          var expired = _getExpiredTimeouts(time);
           // note: expired.length can never be zero (on every change of the queue, we reschedule)
 
           // execute all expired timeouts
@@ -602,6 +632,20 @@ return /******/ (function(modules) { // webpackBootstrap
       return new Date().valueOf();
     }
   }
+
+  /**
+   * Shuffle an array
+   *
+   * + Jonas Raoni Soares Silva
+   * @ http://jsfromhell.com/array/shuffle [v1.0]
+   *
+   * @param {Array} o   Array to be shuffled
+   * @returns {Array}   Returns the shuffled array
+   */
+  exports.shuffle = function (o){
+    for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+  };
 
 
 /***/ }

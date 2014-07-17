@@ -1,14 +1,14 @@
 hypertimer
 ==========
 
-Hypertimer offers time control for simulations. With simulations, it's important to be able to manipulate the time. Typically, simulations are run in discrete time, jumping from event to event in a deterministic manner. And afterwards, a simulation can be played back in continuous time at a faster or slower pace than real-time (depending on the time scale of the simulation). In short, one needs to be able to run a simulation in [hypertime](http://en.wikipedia.org/wiki/Hypertime). 
+Hypertimer offers time control for simulations. With simulations, it's important to be able to manipulate the time. Typically, simulations are run in discrete time, jumping from event to event in a deterministic manner. And afterwards, a simulation can be played back in continuous time at a faster or slower pace than real-time (depending on the time scale of the simulation). Hypertimer makes it possible to run in [hypertime](http://en.wikipedia.org/wiki/Hypertime) or in discrete time (a [discrete event simulation](http://en.wikipedia.org/wiki/Discrete_event_simulation)).
 
 Hypertimer offers basic functionality to control time:
 
 - Get and set the time using functions `getTime()`, `setTime()`, and `now()`. 
 - Schedule events using functions `setTimeout()`, `setInterval()`, and `setTrigger()`.
 
-These functions are compatible with JavaScript's built-in functions `Date.now()`, `setTimeout()`, and `setInterval()`, but there is an important difference: they can run with a different current time and at a different rate.
+These functions are compatible with JavaScript's built-in functions `Date.now()`, `setTimeout()`, and `setInterval()`, but there is an important difference: they can run at a different moment in time and at a different rate.
 
 Hypertimer runs on node.js and on any modern browser (Chrome, FireFox, Opera, Safari, IE9+).
 
@@ -73,6 +73,9 @@ timer2.config({rate: 1/2});
 // create a hypertimer running in discrete time (time will jump
 // from scheduled event to scheduled event)
 var timer3 = hypertimer({rate: 'discrete'});
+
+// create a hypertimer running in discrete time and non-deterministic behavior
+var timer4 = hypertimer({rate: 'discrete', deterministic: false});
 ```
 
 ### Getting and setting time
@@ -188,7 +191,7 @@ timer.setTimeout(function () {
 //   Timeout B
 ```
 
-When performing asynchronous tasks inside a timeout, one needs to create an asynchronous timeout, which calls `done()` when all asynchronous actions are finished. This is required in order to guarantee a deterministic order of execution.
+When performing asynchronous tasks inside a timeout, one needs to create an asynchronous timeout, which calls `done()` when all asynchronous actions are finished. This is required in order to guarantee a deterministic order of execution. When non-deterministic order is desired, the configuration option `deterministic` can be set to `false`.
 
 ```js
 // asynchronous timeout
@@ -241,9 +244,10 @@ By default, a new hypertimer runs with real-time speed and time.
 
 Available options:
 
-Name | Type                 | Default | Description
----- | -------------------- | ------- | -----------
-rate | Number or 'discrete' | 1       | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string 'discrete' to run in discrete time.
+Name          | Type                 | Default | Description
+------------- | -------------------- | ------- | -----------
+rate          | number or 'discrete' | 1       | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string 'discrete' to run in discrete time.
+deterministic | boolean              | true    | If true, (default) events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order. 
 
 Example:
 
@@ -273,8 +277,10 @@ var timer = hypertimer({rate: 10});
 - **`config([options: Object]): Object`**  
   Change the configuration options of the hypertimer, and/or retrieve the current configuration. Available options:
 
-  - `rate: Number | 'discrete'`  
+  - `rate: number | 'discrete'`  
     The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or 'discrete' to run in discrete time. By default, rate is 1. 
+  - `deterministic: boolean`  
+    If true (default), events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
 
 - **`continue()`**  
   Continue the timer when paused. The state of the timer can be retrieved via the property `running`. See also `pause()`.

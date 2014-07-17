@@ -2,6 +2,7 @@
 //       safely distinguishably
 var assert = require('assert');
 var async = require('async');
+var seed = require('seed-random');
 var hypertimer = require('../lib/hypertimer');
 
 /**
@@ -35,7 +36,7 @@ describe('hypertimer', function () {
 
     it('should get configuration', function () {
       var timer = hypertimer();
-      assert.deepEqual(timer.config(), {rate: 1});
+      assert.deepEqual(timer.config(), {rate: 1, deterministic: true});
     });
 
     it('should set configuration', function () {
@@ -1045,6 +1046,79 @@ describe('hypertimer', function () {
     });
 
   });
+
+  describe('determinism', function () {
+    var originalRandom;
+
+    before(function () {
+      // replace the original Math.random with a reproducible one
+      // FIXME: for util.shuffle, we should replace Math.random with a reproducible one but this seems not to work.
+      originalRandom = Math.random;
+      Math.random = seed('key');
+    });
+
+    after(function () {
+      // restore the original random function
+      Math.random = originalRandom;
+    });
+
+    it('configure deterministic option', function () {
+      var timer = hypertimer({deterministic: true});
+      assert.equal(timer.config().deterministic, true);
+
+      timer.config({deterministic: false});
+      assert.equal(timer.config().deterministic, false);
+
+      timer.config({deterministic: true});
+      assert.equal(timer.config().deterministic, true);
+    });
+
+    it('should execute timeouts in deterministic order', function (done) {
+      var timer = hypertimer({rate: 'discrete', deterministic: true});
+
+      var ids = [];
+      var logs = [];
+      for (var i = 0; i < 1000; i++) {
+        (function () {
+          var id = timer.setTimeout(function () {
+            logs.push(id);
+          }, 1000);
+          ids.push(id);
+        })();
+      }
+
+      timer.setTimeout(function () {
+        // the timeouts should have been executed in the order they where added
+        assert.deepEqual(ids, logs);
+
+        done();
+      }, 2000);
+    });
+
+    it('should execute timeouts in non-deterministic order', function () {
+      var timer = hypertimer({rate: 'discrete', deterministic: false});
+
+      var ids = [];
+      var logs = [];
+      for (var i = 0; i < 1000; i++) {
+        (function () {
+          var id = timer.setTimeout(function () {
+            logs.push(id);
+          }, 1000);
+          ids.push(id);
+        })();
+      }
+
+      timer.setTimeout(function () {
+        // the timeouts should have been executed in the order they where added
+        assert.notDeepEqual(ids, logs);
+
+        done();
+      }, 2000);
+    });
+
+  });
+
 
   // TODO: test with a numeric time instead of "real" Dates, timer.setTime(0), rate='discrete', and timeouts like timer.timeout(cb, 1)
 
