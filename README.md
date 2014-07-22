@@ -348,7 +348,6 @@ https://github.com/enmasseio/hypertimer/tree/master/examples
 
 ## Roadmap
 
-- Implement support for non-deterministic behavior.
 - Implement a scalable solution to synchronize hypertimers running in different processes.
 - Use high precision timers and time functions.
 
