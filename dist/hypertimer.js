@@ -5,8 +5,8 @@
  * A timer running faster or slower than real-time, and in continuous or
  * discrete time.
  *
- * @version 1.1.0-SNAPSHOT
- * @date    2014-07-17
+ * @version 1.1.0
+ * @date    2014-07-22
  *
  * @license
  * Copyright (C) 2014 Almende B.V., http://almende.com

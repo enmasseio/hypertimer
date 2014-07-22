@@ -1,7 +1,7 @@
 # History
 
 
-## not yet released, version 1.1.0
+## 2014-07-22, version 1.1.0
 
 - Added support for non-deterministic execution of events.
 
