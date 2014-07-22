@@ -1,6 +1,6 @@
 {
   "name": "hypertimer",
-  "version": "1.1.0",
+  "version": "1.1.1-SNAPSHOT",
   "description": "Time control for simulations",
   "author": "Jos de Jong <wjosdejong@gmail.com> (https://github.com/josdejong)",
   "main": "./index",
