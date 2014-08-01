@@ -8,7 +8,9 @@ Hypertimer offers basic functionality to control time:
 - Get and set the time using functions `getTime()`, `setTime()`, and `now()`. 
 - Schedule events using functions `setTimeout()`, `setInterval()`, and `setTrigger()`.
 
-These functions are compatible with JavaScript's built-in functions `Date.now()`, `setTimeout()`, and `setInterval()`, but there is an important difference: they can run at a different moment in time and at a different rate.
+These functions are compatible with JavaScript's built-in functions `Date.now()`, `setTimeout()`, and `setInterval()`, but there is an important difference: they can run at a different moment in time and at a different rate. 
+
+Hypertimer enables writing code which can be used interchangeably in simulations as well as in real, online application. For example, a processs could predict its future state by running a simulation of itself, given a current state, its own behavior, and a model of the surrounding world.
 
 Hypertimer runs on node.js and on any modern browser (Chrome, FireFox, Opera, Safari, IE9+).
 
