@@ -1,6 +1,12 @@
 # History
 
 
+## not yet released, version 1.1.1
+
+- Implemented a workaround for a bug in node.js when calling `setTimeout`
+  with a non-integer delay.
+
+
 ## 2014-07-22, version 1.1.0
 
 - Added support for non-deterministic execution of events.
