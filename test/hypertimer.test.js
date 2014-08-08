@@ -1045,6 +1045,104 @@ describe('hypertimer', function () {
       }, 5000);
     });
 
+    it('should handle adding a new setTimeout when all timeouts are finished', function (done) {
+      var timer = hypertimer({rate: 'discrete'});
+      var logs = [];
+
+      timer.setTime(new Date(2050,0,1, 12,0,0));
+
+      timer.setTimeout(function () {
+        logs.push('A');
+
+        assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,10));
+      }, 10000);
+
+      setTimeout(function () {
+        timer.setTimeout(function () {
+          logs.push('B');
+
+          assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,20));
+          assert.deepEqual(logs, ['A', 'B']);
+
+          done();
+        }, 10000)
+
+      }, 50)
+    });
+
+    it('should handle adding a new setTrigger when all timeouts are finished', function (done) {
+      var timer = hypertimer({rate: 'discrete'});
+      var logs = [];
+
+      timer.setTime(new Date(2050,0,1, 12,0,0));
+
+      timer.setTrigger(function () {
+        logs.push('A');
+
+        assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,10));
+      }, new Date(2050,0,1, 12,0,10));
+
+      setTimeout(function () {
+        timer.setTrigger(function () {
+          logs.push('B');
+
+          assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,20));
+          assert.deepEqual(logs, ['A', 'B']);
+
+          done();
+        }, new Date(2050,0,1, 12,0,20))
+
+      }, 50)
+    });
+
+    it('should handle adding a new setTimeout in the past', function (done) {
+      var timer = hypertimer({rate: 'discrete'});
+
+      timer.setTime(new Date(2050,0,1, 12,0,0));
+
+      timer.setTimeout(function () {
+        assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,0));
+
+        done()
+      }, -10000);
+    });
+
+    it('should handle adding a new setTimeout with infinite delay', function (done) {
+      var timer = hypertimer({rate: 'discrete'});
+
+      timer.setTime(new Date(2050,0,1, 12,0,0));
+
+      timer.setTimeout(function () {
+        assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,0));
+
+        done()
+      }, Infinity);
+    });
+
+    it('should handle adding a new setTrigger in the past', function (done) {
+      var timer = hypertimer({rate: 'discrete'});
+
+      timer.setTime(new Date(2050,0,1, 12,0,0));
+
+      timer.setTrigger(function () {
+        assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,0));
+
+        done()
+      }, new Date(2050,0,1, 11,0,0));
+    });
+
+    it('should handle adding a new setTrigger with infinite value', function (done) {
+      var timer = hypertimer({rate: 'discrete'});
+
+      timer.setTime(new Date(2050,0,1, 12,0,0));
+
+      timer.setTrigger(function () {
+        assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,0));
+
+        done()
+      }, Infinity);
+    });
+
   });
 
   describe('determinism', function () {
