@@ -1215,8 +1215,36 @@ describe('hypertimer', function () {
       }, 2000);
     });
 
+    it('should handle deep synchronous nesting', function (done) {
+      var timer = hypertimer({rate: 'discrete'});
+
+      timer.setTimeout(function () {
+        timer.setTrigger(function () {
+          timer.setTimeout(function () {
+            timer.setTrigger(function () {
+              done();
+            }, timer.now() + 50)
+          }, 50)
+        }, timer.now() + 50)
+      },50)
+    })
   });
 
+  describe('sync', function () {
+    it('should handle deep synchronous nesting', function (done) {
+      var timer = hypertimer();
+
+      timer.setTimeout(function () {
+        timer.setTrigger(function () {
+          timer.setTimeout(function () {
+            timer.setTrigger(function () {
+              done();
+            }, timer.now() + 50)
+          }, 50)
+        }, timer.now() + 50)
+      },50)
+    })
+  });
 
   // TODO: test with a numeric time instead of "real" Dates, timer.setTime(0), rate='discrete', and timeouts like timer.timeout(cb, 1)
 
