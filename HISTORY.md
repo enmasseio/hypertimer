@@ -1,10 +1,15 @@
 # History
 
 
-## not yet released, version 1.1.1
+## not yet released, version 1.1.2
+
+
+## 2014-10-21, version 1.1.1
 
 - Fixed `setTimeout` and `setTrigger` not working correctly when adding
   dates in the past or infinite delays. 
+- Implemented a workaround for a bug in node.js when calling `setTimeout`
+  with a non-integer delay.
 
 
 ## 2014-07-22, version 1.1.0
