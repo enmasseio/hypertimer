@@ -1,6 +1,9 @@
 # History
 
 
+## not yet released, version 1.1.2
+
+
 ## 2014-10-21, version 1.1.1
 
 - Fixed `setTimeout` and `setTrigger` not working correctly when adding
