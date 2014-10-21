@@ -5,8 +5,8 @@
  * A timer running faster or slower than real-time, and in continuous or
  * discrete time.
  *
- * @version 1.1.1-SNAPSHOT
- * @date    2014-07-22
+ * @version 1.1.1
+ * @date    2014-10-21
  *
  * @license
  * Copyright (C) 2014 Almende B.V., http://almende.com
@@ -152,7 +152,7 @@ return /******/ (function(modules) { // webpackBootstrap
             throw new TypeError('rate must be a positive number or the string "discrete"');
           }
           hyperTime = timer.now();
-          realTime = util.nowReal();
+          realTime = util.systemNow();
           rate = newRate;
         }
         if ('deterministic' in options) {
@@ -202,7 +202,7 @@ return /******/ (function(modules) { // webpackBootstrap
       else {
         if (running) {
           // TODO: implement performance.now() / process.hrtime(time) for high precision calculation of time interval
-          var realInterval = util.nowReal() - realTime;
+          var realInterval = util.systemNow() - realTime;
           var hyperInterval = realInterval * rate;
           return hyperTime + hyperInterval;
         }
@@ -216,7 +216,7 @@ return /******/ (function(modules) { // webpackBootstrap
      * Continue the timer.
      */
     timer['continue'] = function() {
-      realTime = util.nowReal();
+      realTime = util.systemNow();
       running = true;
 
       // reschedule running timeouts
@@ -554,7 +554,7 @@ return /******/ (function(modules) { // webpackBootstrap
           // when running in discrete time, update the hyperTime to the time
           // of the current event
           if (rate === DISCRETE) {
-            hyperTime = time;
+            hyperTime = (time > hyperTime && isFinite(time)) ? time : hyperTime;
           }
 
           // grab all expired timeouts from the queue
@@ -588,7 +588,9 @@ return /******/ (function(modules) { // webpackBootstrap
           }
         }
 
-        timeoutId = setTimeout(onTimeout, realDelay);
+        timeoutId = setTimeout(onTimeout, Math.round(realDelay));
+        // Note: Math.round(realDelay) is to defeat a bug in node.js v0.10.30,
+        //       see https://github.com/joyent/node/issues/8065
       }
     }
 
@@ -599,7 +601,7 @@ return /******/ (function(modules) { // webpackBootstrap
     });
 
     timer.config(options);         // apply options
-    timer.setTime(util.nowReal()); // set time as current real time
+    timer.setTime(util.systemNow()); // set time as current real time
     timer.continue();              // start the timer
 
     return timer;
@@ -619,7 +621,7 @@ return /******/ (function(modules) { // webpackBootstrap
      * Helper function to get the current time
      * @return {number} Current time
      */
-    exports.nowReal = function () {
+    exports.systemNow = function () {
       return Date.now();
     }
   }
@@ -628,7 +630,7 @@ return /******/ (function(modules) { // webpackBootstrap
      * Helper function to get the current time
      * @return {number} Current time
      */
-    exports.nowReal = function () {
+    exports.systemNow = function () {
       return new Date().valueOf();
     }
   }

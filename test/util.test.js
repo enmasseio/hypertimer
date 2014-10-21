@@ -4,6 +4,6 @@ var util = require('../lib/util');
 describe('util', function () {
 
   it('should get current time', function () {
-    assert(Math.abs(util.nowReal() - new Date().valueOf()) < 10);
+    assert(Math.abs(util.systemNow() - new Date().valueOf()) < 10);
   });
 });
