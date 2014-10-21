@@ -1294,4 +1294,41 @@ describe('hypertimer', function () {
     assert.deepEqual(timer.list(), []);
   });
 
+  describe('global', function () {
+
+    it('should replace the global Date object', function () {
+      var SystemDate = Date;
+      var simTime = new Date(2050,0,1, 12,0,0);
+      var timer = hypertimer({global: true});
+      timer.setTime(simTime);
+
+      assert.notStrictEqual(Date, SystemDate);
+      approx(new Date(), simTime);
+      assert.equal(new Date(2014,0,1, 12,0,0).valueOf(), 1388574000000);
+      assert((new Date()) instanceof Date); // TODO
+      approx(new Date(Date.now()), simTime);
+      assert(typeof (new Date()).getHours === 'function');
+
+      // restore the regular system Date
+      timer.config({global: false});
+
+      assert.strictEqual(Date, SystemDate);
+    });
+
+    it('should get realtime via getRealTime()', function () {
+      var SystemDate = Date;
+      var simTime = new Date(2050,0,1, 12,0,0);
+      var timer = hypertimer({global: true});
+      timer.setTime(simTime);
+
+      approx(timer.getSystemTime(), new SystemDate());
+
+      // restore the regular system Date
+      timer.config({global: false});
+
+      assert.strictEqual(Date, SystemDate);
+    });
+
+  });
+
 });

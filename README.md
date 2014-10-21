@@ -250,6 +250,7 @@ Name          | Type                 | Default | Description
 ------------- | -------------------- | ------- | -----------
 rate          | number or 'discrete' | 1       | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string 'discrete' to run in discrete time.
 deterministic | boolean              | true    | If true, (default) events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order. 
+global        | boolean              | false   | If true, the global `Date` object the and global functions `setTimeout` and `setInterval`, `clearTimeout`, and `clearInterval` are overwritten with those of the hypertimer. For example `new Date()` and `Date.now()` will return the time of the hypertimer.
 
 Example:
 
@@ -283,6 +284,8 @@ var timer = hypertimer({rate: 10});
     The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or 'discrete' to run in discrete time. By default, rate is 1. 
   - `deterministic: boolean`  
     If true (default), events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
+  - `global : boolean`  
+    If true, the global `Date` object the and global functions `setTimeout` and `setInterval`, `clearTimeout`, and `clearInterval` are overwritten with those of the hypertimer. For example `new Date()` and `Date.now()` will return the time of the hypertimer.
 
 - **`continue()`**  
   Continue the timer when paused. The state of the timer can be retrieved via the property `running`. See also `pause()`.
@@ -290,6 +293,9 @@ var timer = hypertimer({rate: 10});
 - **`getTime(): Date`**  
   Returns the current time of the timer as Date. See also `now()`.
   The time can be set using `setTime(time)`.
+
+- **`getSystemTime(): Date`**  
+  Returns the real time of the system as Date. Useful to get the system time when the global `Date` object is overwritten by configuring the hypertimer as `global`.
 
 - **`list()`**  
   Returns a list with the id's of all running timeouts.

@@ -5,8 +5,6 @@
 
 - Fixed `setTimeout` and `setTrigger` not working correctly when adding
   dates in the past or infinite delays. 
-- Implemented a workaround for a bug in node.js when calling `setTimeout`
-  with a non-integer delay.
 
 
 ## 2014-07-22, version 1.1.0
