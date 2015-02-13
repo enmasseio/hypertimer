@@ -71,7 +71,12 @@ describe('hypertimer', function () {
     it('should throw an error on invalid rate', function () {
       assert.throws(function () {
         hypertimer({rate: 'bla'});
-      }, /TypeError: rate must be a positive number/);
+      }, /TypeError: rate must be a positive number or the string "discrete-event"/);
+    });
+
+    it('should allow deprecated rate `discrete`', function () {
+      var timer = hypertimer({rate: 'discrete'});
+      assert.ok(true);
     });
 
   });
@@ -896,10 +901,10 @@ describe('hypertimer', function () {
     });
   });
 
-  describe('discrete', function () {
+  describe('discrete events', function () {
 
-    it('should run a series of events in discrete time', function (done) {
-      var timer = hypertimer({rate: 'discrete'});
+    it('should run a series of discrete events', function (done) {
+      var timer = hypertimer({rate: 'discrete-event'});
       var start = new Date();
       var logs = [];
 
@@ -965,8 +970,8 @@ describe('hypertimer', function () {
 
     });
 
-    it('should run an async timeout in discrete time', function (testDone) {
-      var timer = hypertimer({rate: 'discrete'});
+    it('should run an async timeout as discrete event', function (testDone) {
+      var timer = hypertimer({rate: 'discrete-event'});
 
       timer.setTime(new Date(2050,0,1, 12,0,0));
 
@@ -1001,7 +1006,7 @@ describe('hypertimer', function () {
     it('should add timeouts in an async timeout in deterministic order', function (testDone) {
       // The real-time delay for creation of timeout C is larger than that for creating timeout D,
       // so the test would fail if A and B where executed in parallel
-      var timer = hypertimer({rate: 'discrete'});
+      var timer = hypertimer({rate: 'discrete-event'});
       var logs = [];
 
       timer.setTime(new Date(2050,0,1, 12,0,0));
@@ -1046,7 +1051,7 @@ describe('hypertimer', function () {
     });
 
     it('should handle adding a new setTimeout when all timeouts are finished', function (done) {
-      var timer = hypertimer({rate: 'discrete'});
+      var timer = hypertimer({rate: 'discrete-event'});
       var logs = [];
 
       timer.setTime(new Date(2050,0,1, 12,0,0));
@@ -1071,7 +1076,7 @@ describe('hypertimer', function () {
     });
 
     it('should handle adding a new setTrigger when all timeouts are finished', function (done) {
-      var timer = hypertimer({rate: 'discrete'});
+      var timer = hypertimer({rate: 'discrete-event'});
       var logs = [];
 
       timer.setTime(new Date(2050,0,1, 12,0,0));
@@ -1096,7 +1101,7 @@ describe('hypertimer', function () {
     });
 
     it('should handle adding a new setTimeout in the past', function (done) {
-      var timer = hypertimer({rate: 'discrete'});
+      var timer = hypertimer({rate: 'discrete-event'});
 
       timer.setTime(new Date(2050,0,1, 12,0,0));
 
@@ -1108,7 +1113,7 @@ describe('hypertimer', function () {
     });
 
     it('should handle adding a new setTimeout with infinite delay', function (done) {
-      var timer = hypertimer({rate: 'discrete'});
+      var timer = hypertimer({rate: 'discrete-event'});
 
       timer.setTime(new Date(2050,0,1, 12,0,0));
 
@@ -1120,7 +1125,7 @@ describe('hypertimer', function () {
     });
 
     it('should handle adding a new setTrigger in the past', function (done) {
-      var timer = hypertimer({rate: 'discrete'});
+      var timer = hypertimer({rate: 'discrete-event'});
 
       timer.setTime(new Date(2050,0,1, 12,0,0));
 
@@ -1132,7 +1137,7 @@ describe('hypertimer', function () {
     });
 
     it('should handle adding a new setTrigger with infinite value', function (done) {
-      var timer = hypertimer({rate: 'discrete'});
+      var timer = hypertimer({rate: 'discrete-event'});
 
       timer.setTime(new Date(2050,0,1, 12,0,0));
 
@@ -1172,7 +1177,7 @@ describe('hypertimer', function () {
     });
 
     it('should execute timeouts in deterministic order', function (done) {
-      var timer = hypertimer({rate: 'discrete', deterministic: true});
+      var timer = hypertimer({rate: 'discrete-event', deterministic: true});
 
       var ids = [];
       var logs = [];
@@ -1194,7 +1199,7 @@ describe('hypertimer', function () {
     });
 
     it('should execute timeouts in non-deterministic order', function () {
-      var timer = hypertimer({rate: 'discrete', deterministic: false});
+      var timer = hypertimer({rate: 'discrete-event', deterministic: false});
 
       var ids = [];
       var logs = [];
@@ -1216,7 +1221,7 @@ describe('hypertimer', function () {
     });
 
     it('should handle deep synchronous nesting', function (done) {
-      var timer = hypertimer({rate: 'discrete'});
+      var timer = hypertimer({rate: 'discrete-event'});
 
       timer.setTimeout(function () {
         timer.setTrigger(function () {
@@ -1246,7 +1251,7 @@ describe('hypertimer', function () {
     })
   });
 
-  // TODO: test with a numeric time instead of "real" Dates, timer.setTime(0), rate='discrete', and timeouts like timer.timeout(cb, 1)
+  // TODO: test with a numeric time instead of "real" Dates, timer.setTime(0), rate='discrete-event', and timeouts like timer.timeout(cb, 1)
 
   it('should get valueOf', function () {
     var timer = hypertimer();

@@ -1,16 +1,32 @@
 hypertimer
 ==========
 
-Hypertimer offers time control for simulations. With simulations, it's important to be able to manipulate the time. Typically, simulations are run in discrete time, jumping from event to event in a deterministic manner. And afterwards, a simulation can be played back in continuous time at a faster or slower pace than real-time (depending on the time scale of the simulation). Hypertimer makes it possible to run in [hypertime](http://en.wikipedia.org/wiki/Hypertime) or in discrete time (a [discrete event simulation](http://en.wikipedia.org/wiki/Discrete_event_simulation)).
+Hypertimer offers time control for simulations. With simulations, it's important to be able to manipulate the time. There are a number of different categories of simulations:
+
+-   [Continuous simulation](http://en.wikipedia.org/wiki/Continuous_simulation), used for simulating any system with continuous phenomena. From Wikipedia:
+
+    > Continuous Simulation refers to a computer model of a physical system that continuously tracks system response according to a set of equations typically involving differential equations.
+
+-   [Discrete simulation](http://en.wikipedia.org/wiki/Continuous_simulation#Dissociation), relying upon countable phenomena. From Wikipedia:
+
+    > Discrete simulation relies upon countable phenomena like the number of individuals in a group, the number of darts thrown, or the number of nodes in a Directed graph.
+    > [...]
+    > Discrete simulations may be applied to represent continuous phenomena, but the resulting simulations produce approximate results.
+
+-   [Discrete event simulation](http://en.wikipedia.org/wiki/Discrete_event_simulation), used for event-based simulations. From Wikipedia:
+
+    > A discrete-event simulation (DES), models the operation of a system as a discrete sequence of events in time. Each event occurs at a particular instant in time and marks a change of state in the system. Between consecutive events, no change in the system is assumed to occur; thus the simulation can directly jump in time from one event to the next.
+
+`hypertimer` makes it possible to run in "[hypertime](http://en.wikipedia.org/wiki/Hypertime)". It can be used for *discrete simulations*, *discrete event simulations*, and animations. It allows to run a timer at a faster or slower pace than real-time, or run a discrete event simulation jumping from event to event.
 
 Hypertimer offers basic functionality to control time:
 
 - Get and set the time using functions `getTime()`, `setTime()`, and `now()`. 
 - Schedule events using functions `setTimeout()`, `setInterval()`, and `setTrigger()`.
 
-These functions are compatible with JavaScript's built-in functions `Date.now()`, `setTimeout()`, and `setInterval()`, but there is an important difference: they can run at a different moment in time and at a different rate. 
+These functions are compatible with JavaScript's built-in functions `Date.now()`, `setTimeout()`, and `setInterval()`, with the difference that they can use a simulated time rather than the system time.
 
-Hypertimer enables writing code which can be used interchangeably in simulations as well as in real, online application. For example, a processs could predict its future state by running a simulation of itself, given a current state, its own behavior, and a model of the surrounding world.
+Hypertimer enables writing code which can be used interchangeably in simulations as well as for real-time applications. For example, a process could predict its future state by running a simulation of itself, given a current state, its own behavior, and a model of the surrounding world.
 
 Hypertimer runs on node.js and on any modern browser (Chrome, FireFox, Opera, Safari, IE9+).
 
@@ -57,7 +73,12 @@ timer.setTime(new Date(2014, 0, 1));
 
 ### Configuring a hypertimer
 
-A hypertimer can run in continuous or discrete time, and can run faster or slower than real-time. The speed of a hypertimer can be configured via the option `rate`, which can be a positive number (to run in continuous time) or the string `'discrete'` (to run in discrete time).
+A hypertimer can run in two modes:
+
+- Run at a continuous rate, at a faster, slower, or the same pace as real-time.
+- Run discrete events, jumping from event to event.
+
+The mode of a hypertimer can be configured via the option `rate`, which can be a positive number to run in at a continuous pace, or the string `'discrete-event'` to run discrete events.
 
 ```js
 // create a hypertimer running ten times faster than real-time
@@ -72,12 +93,12 @@ var timer2 = hypertimer();
 // adjust the rate later on
 timer2.config({rate: 1/2});
 
-// create a hypertimer running in discrete time (time will jump
+// create a hypertimer running discrete events (time will jump
 // from scheduled event to scheduled event)
-var timer3 = hypertimer({rate: 'discrete'});
+var timer3 = hypertimer({rate: 'discrete-event'});
 
-// create a hypertimer running in discrete time and non-deterministic behavior
-var timer4 = hypertimer({rate: 'discrete', deterministic: false});
+// create a hypertimer running discrete events with non-deterministic behavior
+var timer4 = hypertimer({rate: 'discrete-event', deterministic: false});
 ```
 
 ### Getting and setting time
@@ -169,15 +190,17 @@ var id3 = timer.setInterval(function () {
 }, interval, firstTime);
 ```
 
-### Discrete time
+### Discrete event simulation
 
-When running in continuous time (rate is a positive number), scheduled events are triggered at their scheduled time (in hyper-time). When running a simulation, there is no need to wait and do nothing between scheduled events. It is much faster to jump from event to event in discrete time. To create a hypertimer running in discrete time, configure rate as `'discrete'`. Hypertimer ensures that all scheduled events are executed in a deterministic order.
+When running at a continuous rate, scheduled events are triggered at their scheduled (simulated) time. Between events, the timer is just waiting until the clock reaches the time of the next event. When the state of the system does not change between events, there is no need to wait. It is much faster to jump from event to the first next event. This is called a *discrete event simulation*.
 
-In the example below, the application will immediately output 'done!' and not after a delay of 10 seconds, because the timer is running in discrete time and immediately jumps to the first next event.
+To create a hypertimer running discrete events, configure `rate: 'discrete-event'`. Hypertimer ensures that all scheduled events are executed in a deterministic order.
+
+In the example below, the application will immediately output 'done!' and not after a delay of 10 seconds, because the timer is running discrete events and immediately jumps to the first next event.
 
 ```js
-// create a hypertimer running in discrete time,
-var timer = hypertimer({rate: 'discrete'});
+// create a hypertimer running discrete events,
+var timer = hypertimer({rate: 'discrete-event'});
 
 var delay = 10000;
 timer.setTimeout(function () {
@@ -205,9 +228,9 @@ timer.setTimeout(function (done) {
 An example of using an asynchronous timeout:
 
 ```js
-// create a hypertimer running in discrete time,
-// jumping from scheduled event to scheduled event.
-var timer = hypertimer({rate: 'discrete'});
+// create a hypertimer running discrete events,
+// jumping from event to the next event.
+var timer = hypertimer({rate: 'discrete-event'});
 
 // create an asynchronous timeout, having a callback parameter done
 timer.setTimeout(function (done) {
@@ -220,7 +243,7 @@ timer.setTimeout(function (done) {
     }, 10000);
 
     // once we are done with our asynchronous event, call done()
-    // so the hypertimer knows he can continue with a next event.
+    // so the hypertimer knows it can continue with the next event.
     done();
   });
 }, 10000);
@@ -246,10 +269,10 @@ By default, a new hypertimer runs with real-time speed and time.
 
 Available options:
 
-Name          | Type                 | Default | Description
-------------- | -------------------- | ------- | -----------
-rate          | number or 'discrete' | 1       | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string 'discrete' to run in discrete time.
-deterministic | boolean              | true    | If true, (default) events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order. 
+Name          | Type                          | Default | Description
+------------- | ----------------------------- | ------- | -----------
+rate          | number or `'discrete-event'`  | `1`     | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string `'discrete-event'` to run discrete events.
+deterministic | boolean                       | `true`  | If true, (default) events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
 
 Example:
 
@@ -279,8 +302,8 @@ var timer = hypertimer({rate: 10});
 - **`config([options: Object]): Object`**  
   Change the configuration options of the hypertimer, and/or retrieve the current configuration. Available options:
 
-  - `rate: number | 'discrete'`  
-    The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or 'discrete' to run in discrete time. By default, rate is 1. 
+  - `rate: number | 'discrete-event'`
+    The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string `'discrete-event'` to run discrete events. By default, rate is 1.
   - `deterministic: boolean`  
     If true (default), events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
 
@@ -399,7 +422,7 @@ To see the coverage results, open the generated report in your browser:
 
 ## License
 
-Copyright (C) 2014 Almende B.V., http://almende.com
+Copyright (C) 2014-2015 Almende B.V., http://almende.com
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -412,5 +435,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
 
 

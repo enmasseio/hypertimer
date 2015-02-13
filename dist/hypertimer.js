@@ -2,14 +2,15 @@
  * hypertimer.js
  * https://github.com/enmasseio/hypertimer
  *
- * A timer running faster or slower than real-time, and in continuous or
- * discrete time.
+ * Time control for simulations.
  *
- * @version 1.1.1
- * @date    2014-10-21
+ * Run a timer at a faster or slower pace than real-time, or run discrete events.
+ *
+ * @version 1.1.2-SNAPSHOT
+ * @date    2015-02-13
  *
  * @license
- * Copyright (C) 2014 Almende B.V., http://almende.com
+ * Copyright (C) 2014-2015 Almende B.V., http://almende.com
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy
@@ -95,17 +96,17 @@ return /******/ (function(modules) { // webpackBootstrap
     TRIGGER: 2
   };
 
-  var DISCRETE = 'discrete';
+  var DES = 'discrete-event';
 
   /**
    * Create a new hypertimer
    * @param {Object} [options]  The following options are available:
-   *                            rate: number | 'discrete'
+   *                            rate: number | 'discrete-event'
    *                                        The rate of speed of hyper time with
    *                                        respect to real-time in milliseconds
    *                                        per millisecond. Rate must be a
-   *                                        positive number, or 'discrete' to
-   *                                        run in discrete time (jumping from
+   *                                        positive number, or 'discrete-event' to
+   *                                        run discrete events (jumping from
    *                                        event to event). By default, rate is 1.
    *                            deterministic: boolean
    *                                        If true (default), simultaneous events
@@ -132,12 +133,12 @@ return /******/ (function(modules) { // webpackBootstrap
      * Change configuration options of the hypertimer, or retrieve current
      * configuration.
      * @param {Object} [options]  The following options are available:
-     *                            rate: number | 'discrete'
+     *                            rate: number | 'discrete-event'
      *                                        The rate of speed of hyper time with
      *                                        respect to real-time in milliseconds
      *                                        per millisecond. Rate must be a
-     *                                        positive number, or 'discrete' to
-     *                                        run in discrete time (jumping from
+     *                                        positive number, or 'discrete-event' to
+     *                                        run discrete events (jumping from
      *                                        event to event). By default, rate is 1.
      *                            deterministic: boolean
      *                                        If true (default), simultaneous events
@@ -147,9 +148,24 @@ return /******/ (function(modules) { // webpackBootstrap
     timer.config = function(options) {
       if (options) {
         if ('rate' in options) {
-          var newRate = (options.rate === DISCRETE) ? DISCRETE : Number(options.rate);
-          if (newRate !== DISCRETE && (isNaN(newRate) || newRate <= 0)) {
-            throw new TypeError('rate must be a positive number or the string "discrete"');
+          var newRate;
+          if (options.rate === DES) {
+            newRate = DES;
+          }
+          // TODO: remove deprecated option 'discrete' in v2.
+          else if (options.rate === 'discrete') {
+            console.log('WARNING: option rate:\'discrete\' is deprecated. Use rate:\'discrete-event\' instead.');
+            newRate = DES;
+          }
+          else {
+            newRate = Number(options.rate)
+          }
+
+          if (newRate !== DES && (isNaN(newRate) || newRate <= 0)) {
+            if (typeof options.rate === 'string') {
+
+            }
+            throw new TypeError('rate must be a positive number or the string "' + DES + '"');
           }
           hyperTime = timer.now();
           realTime = util.systemNow();
@@ -196,7 +212,7 @@ return /******/ (function(modules) { // webpackBootstrap
      * @return {number} The time
      */
     timer.now = function () {
-      if (rate === DISCRETE) {
+      if (rate === DES) {
         return hyperTime;
       }
       else {
@@ -240,7 +256,6 @@ return /******/ (function(modules) { // webpackBootstrap
      * See also now().
      * @return {Date} The time
      */
-  // rename to getTime
     timer.getTime = function() {
       return new Date(timer.now());
     };
@@ -532,7 +547,7 @@ return /******/ (function(modules) { // webpackBootstrap
       // do not _schedule when there are timeouts in progress
       // this can be the case with async timeouts in discrete time.
       // _schedule will be executed again when all async timeouts are finished.
-      if (rate === DISCRETE && Object.keys(current).length > 0) {
+      if (rate === DES && Object.keys(current).length > 0) {
         return;
       }
 
@@ -548,12 +563,12 @@ return /******/ (function(modules) { // webpackBootstrap
         // schedule next timeout
         var time = next.time;
         var delay = time - timer.now();
-        var realDelay = (rate === DISCRETE) ? 0 : delay / rate;
+        var realDelay = (rate === DES) ? 0 : delay / rate;
 
         function onTimeout() {
-          // when running in discrete time, update the hyperTime to the time
+          // when running in discrete event simulation, update the hyperTime to the time
           // of the current event
-          if (rate === DISCRETE) {
+          if (rate === DES) {
             hyperTime = (time > hyperTime && isFinite(time)) ? time : hyperTime;
           }
 
@@ -562,8 +577,8 @@ return /******/ (function(modules) { // webpackBootstrap
           // note: expired.length can never be zero (on every change of the queue, we reschedule)
 
           // execute all expired timeouts
-          if (rate === DISCRETE) {
-            // in discrete time, we execute all expired timeouts serially,
+          if (rate === DES) {
+            // in discrete event simulation, we execute all expired timeouts serially,
             // and wait for their completion in order to guarantee deterministic
             // order of execution
             function next() {

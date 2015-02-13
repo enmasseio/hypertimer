@@ -1,7 +1,11 @@
 # History
 
 
-## not yet released, version 1.1.2
+## not yet released, version 1.2.0
+
+- Renamed option `rate: 'discrete'` to `rate: 'discrete-event'`, and improved
+  the readme regarding discrete and discrete event simulations. The old option
+  `'discrete'` can still be used but throws an error. Will be removed in v2.0.
 
 
 ## 2014-10-21, version 1.1.1

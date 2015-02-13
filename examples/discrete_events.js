@@ -1,8 +1,8 @@
 var hypertimer = require('../index');
 
-// create a hypertimer running in discrete time,
-// jumping from scheduled event to scheduled event.
-var timer = hypertimer({rate: 'discrete'});
+// create a hypertimer running discrete events,
+// jumping from event to the next event.
+var timer = hypertimer({rate: 'discrete-event'});
 
 timer.setTimeout(function () {
   console.log('Timeout A');
@@ -21,7 +21,7 @@ timer.setTimeout(function () {
 
 }, 10000);
 
-// Because of running in discrete time, the application will finish immediately
+// Because of running discrete events, the application will finish immediately
 // and all events are executed in deterministic order.
 //
 // Output will be:
