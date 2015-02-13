@@ -118,13 +118,13 @@ return /******/ (function(modules) { // webpackBootstrap
     var deterministic = true; // run simultaneous events in a deterministic order
 
     // properties
-    var running = false;   // true when running
-    var realTime = null;   // timestamp. the moment in real-time when hyperTime was set
-    var hyperTime = null;  // timestamp. the start time in hyper-time
-    var timeouts = [];     // array with all running timeouts
-    var current = {};      // the timeouts currently in progress (callback is being executed)
-    var timeoutId = null;  // currently running timer
-    var idSeq = 0;         // counter for unique timeout id's
+    var running = false;              // true when running
+    var realTime = null;              // timestamp. the moment in real-time when hyperTime was set
+    var hyperTime = util.systemNow(); // timestamp. the start time in hyper-time
+    var timeouts = [];                // array with all running timeouts
+    var current = {};                 // the timeouts currently in progress (callback is being executed)
+    var timeoutId = null;             // currently running timer
+    var idSeq = 0;                    // counter for unique timeout id's
 
     // exported timer object with public functions and variables
     var timer = {};
@@ -140,6 +140,8 @@ return /******/ (function(modules) { // webpackBootstrap
      *                                        positive number, or 'discrete-event' to
      *                                        run discrete events (jumping from
      *                                        event to event). By default, rate is 1.
+     *                            time: number | Date
+     *                                        Set a simulation time.
      *                            deterministic: boolean
      *                                        If true (default), simultaneous events
      *                                        are executed in a deterministic order.
@@ -147,30 +149,30 @@ return /******/ (function(modules) { // webpackBootstrap
      */
     timer.config = function(options) {
       if (options) {
-        if ('rate' in options) {
-          var newRate;
-          if (options.rate === DES) {
-            newRate = DES;
-          }
-          // TODO: remove deprecated option 'discrete' in v2.
-          else if (options.rate === 'discrete') {
-            console.log('WARNING: option rate:\'discrete\' is deprecated. Use rate:\'discrete-event\' instead.');
-            newRate = DES;
+        if ('time' in options) {
+          if (options.time instanceof Date) {
+            hyperTime = options.time.valueOf();
           }
           else {
-            newRate = Number(options.rate)
-          }
-
-          if (newRate !== DES && (isNaN(newRate) || newRate <= 0)) {
-            if (typeof options.rate === 'string') {
-
+            var newTime = Number(options.time);
+            if (isNaN(newTime)) {
+              throw new TypeError('time must be a Date or number');
             }
+            hyperTime = newTime;
+          }
+        }
+
+        if ('rate' in options) {
+          var newRate = (options.rate === DES) ? DES : Number(options.rate);
+          if (newRate !== DES && (isNaN(newRate) || newRate <= 0)) {
             throw new TypeError('rate must be a positive number or the string "' + DES + '"');
           }
-          hyperTime = timer.now();
+
+          hyperTime = timer.now(); // TODO: remove this line?
           realTime = util.systemNow();
           rate = newRate;
         }
+
         if ('deterministic' in options) {
           deterministic = options.deterministic ? true : false;
         }
@@ -184,26 +186,6 @@ return /******/ (function(modules) { // webpackBootstrap
         rate: rate,
         deterministic: deterministic
       };
-    };
-
-    /**
-     * Set the time of the timer. To get the current time, use getTime() or now().
-     * @param {number | Date} time  The time in hyper-time.
-     */
-    timer.setTime = function (time) {
-      if (time instanceof Date) {
-        hyperTime = time.valueOf();
-      }
-      else {
-        var newTime = Number(time);
-        if (isNaN(newTime)) {
-          throw new TypeError('time must be a Date or number');
-        }
-        hyperTime = newTime;
-      }
-
-      // reschedule running timeouts
-      _schedule();
     };
 
     /**
@@ -615,9 +597,8 @@ return /******/ (function(modules) { // webpackBootstrap
       }
     });
 
-    timer.config(options);         // apply options
-    timer.setTime(util.systemNow()); // set time as current real time
-    timer.continue();              // start the timer
+    timer.config(options);  // apply options
+    timer.continue();       // start the timer
 
     return timer;
   }

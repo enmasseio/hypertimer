@@ -1,10 +1,11 @@
 var hypertimer = require('../index');
 
 // create a hypertimer running ten times faster than real-time
-var timer = hypertimer({rate: 10});
-
 // start the timer at 1st of January 2050
-timer.setTime(new Date(2050, 0, 1, 12, 0, 0));
+var timer = hypertimer({
+  rate: 10,
+  time: new Date(2050, 0, 1, 12, 0, 0)
+});
 
 console.log('start', timer.getTime()); // Sat Jan 01 2050 12:00:00 GMT+0100 (CET)
 

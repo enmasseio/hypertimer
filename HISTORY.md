@@ -1,11 +1,12 @@
 # History
 
 
-## not yet released, version 1.2.0
+## not yet released, version 2.0.0
 
 - Renamed option `rate: 'discrete'` to `rate: 'discrete-event'`, and improved
-  the readme regarding discrete and discrete event simulations. The old option
-  `'discrete'` can still be used but throws an error. Will be removed in v2.0.
+  the readme regarding discrete and discrete event simulations.
+- Removed method `setTime`, time can be configured on construction or with
+  the function `config({time: ...})`.
 
 
 ## 2014-10-21, version 1.1.1

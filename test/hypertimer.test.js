@@ -60,7 +60,7 @@ describe('hypertimer', function () {
 
     it('should update configuration', function () {
       var timer = hypertimer({rate: 1});
-      timer.setTime(new Date(2050,0,1,12,0,0,0));
+      timer.config({time: new Date(2050,0,1,12,0,0,0)});
       approx(timer.getTime(), new Date(2050,0,1,12,0,0,0));
 
       timer.config({rate: 10});
@@ -74,30 +74,29 @@ describe('hypertimer', function () {
       }, /TypeError: rate must be a positive number or the string "discrete-event"/);
     });
 
-    it('should allow deprecated rate `discrete`', function () {
-      var timer = hypertimer({rate: 'discrete'});
-      assert.ok(true);
-    });
-
   });
 
   describe('get/set time', function () {
     it ('should set the current hyper-time from a Date', function () {
-      var timer = hypertimer({rate: 1});
-      timer.setTime(new Date(2050, 0, 1));
+      var timer = hypertimer({
+        rate: 1,
+        time: new Date(2050, 0, 1)
+      });
       approx(timer.getTime(), new Date(2050, 0, 1));
     });
 
     it ('should set the current hyper-time from a number', function () {
-      var timer = hypertimer({rate: 1});
-      timer.setTime(new Date(2050, 0, 1).valueOf());
+      var timer = hypertimer({
+        rate: 1,
+        time: new Date(2050, 0, 1).valueOf()
+      });
       approx(timer.getTime(), new Date(2050, 0, 1));
     });
 
     it ('should throw an error in case of invalid variable', function () {
       var timer = hypertimer({rate: 1});
-      assert.throws(function () {timer.setTime('bla')}, /time must be a Date or number/);
-      assert.throws(function () {timer.setTime({})}, /time must be a Date or number/);
+      assert.throws(function () {timer.config({time:'bla'})}, /time must be a Date or number/);
+      assert.throws(function () {timer.config({time:{}})}, /time must be a Date or number/);
     });
 
     it ('should get the current hyper-time as Date', function () {
@@ -153,7 +152,7 @@ describe('hypertimer', function () {
 
       approx(timer.getTime(), new Date());
 
-      timer.setTime(d);
+      timer.config({time: d});
       approx(timer.getTime(), d);
     });
 
@@ -161,7 +160,7 @@ describe('hypertimer', function () {
       var d = new Date(2050,0,1);
       var timer = hypertimer({rate: 1});
 
-      timer.setTime(d);
+      timer.config({time: d});
       approx(timer.getTime(), d);
 
       timer.pause();
@@ -247,8 +246,6 @@ describe('hypertimer', function () {
       }, Infinity);
     });
 
-    // TODO:
-
     it('should continue scheduling when the first timeout is cancelled', function (done) {
       var timer = hypertimer({rate: 1});
       var start = new Date();
@@ -296,8 +293,11 @@ describe('hypertimer', function () {
     });
 
     it('should pause a timeout when the timer is paused', function (done) {
-      var timer = hypertimer({rate: 1/2});
-      timer.setTime(new Date(2050,0,1,12,0,0,0));
+      var timer = hypertimer({
+        rate: 1/2,
+        time: new Date(2050,0,1,12,0,0,0)
+      });
+
       var start = new Date();
       var log = [];
 
@@ -327,10 +327,11 @@ describe('hypertimer', function () {
     });
 
     it('should adjust a timeout when the timers time is adjusted', function (done) {
-      var timer = hypertimer({rate: 1});
+      var timer = hypertimer({
+        rate: 1,
+        time: new Date(2050,0,1,12,0,0,0)
+      });
       var start = new Date();
-
-      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       timer.setTimeout(function () {
         approx(new Date(), new Date(start.valueOf() + 100));
@@ -338,15 +339,16 @@ describe('hypertimer', function () {
         done();
       }, 200);
 
-      timer.setTime(new Date(2050,0,1,12,0,0,100));
+      timer.config({time: new Date(2050,0,1,12,0,0,100)});
     });
 
     it('should adjust a timeout when the timers rate is adjusted', function (done) {
-      var timer = hypertimer({rate: 1/2});
+      var timer = hypertimer({
+        rate: 1/2,
+        time: new Date(2050,0,1,12,0,0,0)
+      });
       var start = new Date();
       var log = [];
-
-      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       timer.setTimeout(function () {
         assert.deepEqual(log, ['A']);
@@ -366,10 +368,11 @@ describe('hypertimer', function () {
     });
 
     it('should cancel a timeout with clearTimeout', function (done) {
-      var timer = hypertimer({rate: 1});
+      var timer = hypertimer({
+        rate: 1,
+        time: new Date(2050,0,1,12,0,0,0)
+      });
       var log = [];
-
-      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       var timeout1 = timer.setTimeout(function () {
         log.push('1');
@@ -488,11 +491,10 @@ describe('hypertimer', function () {
     });
 
     it('should set a trigger with a start and end', function (done) {
-      var timer = hypertimer({rate: 2});
       var start = new Date(2050,0,1,12,0,0,0);
       var end   = new Date(2050,0,1,12,0,0,200);
 
-      timer.setTime(start);
+      var timer = hypertimer({rate: 2, time: start});
 
       var a = new Date();
       timer.setTrigger(function () {
@@ -502,11 +504,10 @@ describe('hypertimer', function () {
     });
 
     it('should set a trigger with a start and an end in the past', function (done) {
-      var timer = hypertimer({rate: 2});
       var start = new Date(2050,0,1,12,0,0,0);
       var end   = new Date(2050,0,1,11,0,0,0);
 
-      timer.setTime(start);
+      var timer = hypertimer({rate: 2, time: start});
 
       var a = new Date();
       timer.setTrigger(function () {
@@ -516,11 +517,13 @@ describe('hypertimer', function () {
     });
 
     it('should execute multiple triggers in the right order', function (done) {
-      var timer = hypertimer({rate: 1/2});
       var start = new Date();
       var log = [];
 
-      timer.setTime(new Date(2050,0,1,12,0,0,0));
+      var timer = hypertimer({
+        rate: 1/2,
+        time: new Date(2050,0,1,12,0,0,0)
+      });
 
       var triggerB = timer.setTrigger(function () {
         approx(new Date(), new Date(start.valueOf() + 200));
@@ -549,8 +552,10 @@ describe('hypertimer', function () {
     });
 
     it('should pause a trigger when the timer is paused', function (done) {
-      var timer = hypertimer({rate: 1/2});
-      timer.setTime(new Date(2050,0,1,12,0,0,0));
+      var timer = hypertimer({
+        rate: 1/2,
+        time: new Date(2050,0,1,12,0,0,0)
+      });
       var start = new Date();
       var log = [];
 
@@ -580,10 +585,11 @@ describe('hypertimer', function () {
     });
 
     it('should adjust a trigger when the timers time is adjusted', function (done) {
-      var timer = hypertimer({rate: 1});
+      var timer = hypertimer({
+        rate: 1,
+        time: new Date(2050,0,1,12,0,0,0)
+      });
       var start = new Date();
-
-      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       timer.setTrigger(function () {
         approx(new Date(), new Date(start.valueOf() + 100));
@@ -591,15 +597,16 @@ describe('hypertimer', function () {
         done();
       }, new Date(2050,0,1,12,0,0,200));
 
-      timer.setTime(new Date(2050,0,1,12,0,0,100));
+      timer.config({time: new Date(2050,0,1,12,0,0,100)});
     });
 
     it('should adjust a trigger when the timers rate is adjusted', function (done) {
-      var timer = hypertimer({rate: 1/2});
+      var timer = hypertimer({
+        rate: 1/2,
+        time: new Date(2050,0,1,12,0,0,0)
+      });
       var start = new Date();
       var log = [];
-
-      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       timer.setTrigger(function () {
         assert.deepEqual(log, ['A']);
@@ -619,10 +626,11 @@ describe('hypertimer', function () {
     });
 
     it('should cancel a trigger with clearTrigger', function (done) {
-      var timer = hypertimer({rate: 1});
+      var timer = hypertimer({
+        rate: 1,
+        time: new Date(2050,0,1,12,0,0,0)
+      });
       var log = [];
-
-      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       var trigger1 = timer.setTrigger(function () {
         log.push('1');
@@ -667,10 +675,11 @@ describe('hypertimer', function () {
     });
 
     it('should set an interval with firstTime', function (done) {
-      var timer = hypertimer({rate: 1});
+      var timer = hypertimer({
+        rate: 1,
+        time: new Date(2050,0,1,12,0,0,0)
+      });
       var start = new Date();
-
-      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       var firstTime = new Date(2050,0,1,12,0,0,300);
       var occurrence = 0;
@@ -687,10 +696,11 @@ describe('hypertimer', function () {
     });
 
     it('should set an interval with a number as firstTime', function (done) {
-      var timer = hypertimer({rate: 1});
+      var timer = hypertimer({
+        rate: 1,
+        time: new Date(2050,0,1,12,0,0,0)
+      });
       var start = new Date();
-
-      timer.setTime(new Date(2050,0,1,12,0,0,0));
 
       var firstTime = new Date(2050,0,1,12,0,0,300);
       var occurrence = 0;
@@ -793,12 +803,11 @@ describe('hypertimer', function () {
     });
 
     it('should set a negative interval with firstTime', function (done) {
-      var timer = hypertimer({rate: 1});
       var timerStart = new Date(2050,0,1,12,0,0,0);
       var realStart = new Date(new Date().valueOf() + 200);
       var firstStart = new Date(2050,0,1,12,0,0,200);
 
-      timer.setTime(timerStart);
+      var timer = hypertimer({rate: 1, time: timerStart});
 
       var occurrence = 0;
       var interval = timer.setInterval(function () {
@@ -866,10 +875,11 @@ describe('hypertimer', function () {
     });
 
     it('should correctly update interval when rate changes', function (done) {
-      var timer = hypertimer({rate: 1});
+      var timer = hypertimer({
+        rate: 1,
+        time: new Date(2050,0,1, 12,0,0, 0)
+      });
       var start = new Date();
-
-      timer.setTime(new Date(2050,0,1, 12,0,0, 0));
 
       var plans = {
         '1': {realTime: new Date(start.valueOf() + 100), hyperTime: new Date(2050,0,1, 12,0,0, 100), newRate: 2},
@@ -904,11 +914,12 @@ describe('hypertimer', function () {
   describe('discrete events', function () {
 
     it('should run a series of discrete events', function (done) {
-      var timer = hypertimer({rate: 'discrete-event'});
+      var timer = hypertimer({
+        rate: 'discrete-event',
+        time: new Date(2050,0,1, 12,0,0, 0)
+      });
       var start = new Date();
       var logs = [];
-
-      timer.setTime(new Date(2050,0,1, 12,0,0));
 
       timer.setTimeout(function () {
         logs.push('A');
@@ -971,9 +982,10 @@ describe('hypertimer', function () {
     });
 
     it('should run an async timeout as discrete event', function (testDone) {
-      var timer = hypertimer({rate: 'discrete-event'});
-
-      timer.setTime(new Date(2050,0,1, 12,0,0));
+      var timer = hypertimer({
+        rate: 'discrete-event',
+        time: new Date(2050,0,1, 12,0,0, 0)
+      });
 
       timer.setTimeout(function (done) {
         try {
@@ -1006,10 +1018,12 @@ describe('hypertimer', function () {
     it('should add timeouts in an async timeout in deterministic order', function (testDone) {
       // The real-time delay for creation of timeout C is larger than that for creating timeout D,
       // so the test would fail if A and B where executed in parallel
-      var timer = hypertimer({rate: 'discrete-event'});
-      var logs = [];
+      var timer = hypertimer({
+        rate: 'discrete-event',
+        time: new Date(2050,0,1, 12,0,0, 0)
+      });
 
-      timer.setTime(new Date(2050,0,1, 12,0,0));
+      var logs = [];
 
       timer.setTimeout(function (done) {
         logs.push('A');
@@ -1051,10 +1065,11 @@ describe('hypertimer', function () {
     });
 
     it('should handle adding a new setTimeout when all timeouts are finished', function (done) {
-      var timer = hypertimer({rate: 'discrete-event'});
+      var timer = hypertimer({
+        rate: 'discrete-event',
+        time: new Date(2050,0,1, 12,0,0, 0)
+      });
       var logs = [];
-
-      timer.setTime(new Date(2050,0,1, 12,0,0));
 
       timer.setTimeout(function () {
         logs.push('A');
@@ -1076,10 +1091,11 @@ describe('hypertimer', function () {
     });
 
     it('should handle adding a new setTrigger when all timeouts are finished', function (done) {
-      var timer = hypertimer({rate: 'discrete-event'});
+      var timer = hypertimer({
+        rate: 'discrete-event',
+        time: new Date(2050,0,1, 12,0,0, 0)
+      });
       var logs = [];
-
-      timer.setTime(new Date(2050,0,1, 12,0,0));
 
       timer.setTrigger(function () {
         logs.push('A');
@@ -1101,9 +1117,10 @@ describe('hypertimer', function () {
     });
 
     it('should handle adding a new setTimeout in the past', function (done) {
-      var timer = hypertimer({rate: 'discrete-event'});
-
-      timer.setTime(new Date(2050,0,1, 12,0,0));
+      var timer = hypertimer({
+        rate: 'discrete-event',
+        time: new Date(2050,0,1, 12,0,0, 0)
+      });
 
       timer.setTimeout(function () {
         assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,0));
@@ -1113,9 +1130,10 @@ describe('hypertimer', function () {
     });
 
     it('should handle adding a new setTimeout with infinite delay', function (done) {
-      var timer = hypertimer({rate: 'discrete-event'});
-
-      timer.setTime(new Date(2050,0,1, 12,0,0));
+      var timer = hypertimer({
+        rate: 'discrete-event',
+        time: new Date(2050,0,1, 12,0,0, 0)
+      });
 
       timer.setTimeout(function () {
         assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,0));
@@ -1125,9 +1143,10 @@ describe('hypertimer', function () {
     });
 
     it('should handle adding a new setTrigger in the past', function (done) {
-      var timer = hypertimer({rate: 'discrete-event'});
-
-      timer.setTime(new Date(2050,0,1, 12,0,0));
+      var timer = hypertimer({
+        rate: 'discrete-event',
+        time: new Date(2050,0,1, 12,0,0, 0)
+      });
 
       timer.setTrigger(function () {
         assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,0));
@@ -1137,9 +1156,10 @@ describe('hypertimer', function () {
     });
 
     it('should handle adding a new setTrigger with infinite value', function (done) {
-      var timer = hypertimer({rate: 'discrete-event'});
-
-      timer.setTime(new Date(2050,0,1, 12,0,0));
+      var timer = hypertimer({
+        rate: 'discrete-event',
+        time: new Date(2050,0,1, 12,0,0, 0)
+      });
 
       timer.setTrigger(function () {
         assert.deepEqual(timer.getTime(), new Date(2050,0,1, 12,0,0));
@@ -1251,7 +1271,7 @@ describe('hypertimer', function () {
     })
   });
 
-  // TODO: test with a numeric time instead of "real" Dates, timer.setTime(0), rate='discrete-event', and timeouts like timer.timeout(cb, 1)
+  // TODO: test with a numeric time instead of "real" Dates, timer.config({time: 0}), rate='discrete-event', and timeouts like timer.timeout(cb, 1)
 
   it('should get valueOf', function () {
     var timer = hypertimer();

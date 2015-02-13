@@ -42,7 +42,7 @@ timer.setTimeout(function (done) {
 
     // create another timeout inside the asynchronous timeout
     timer.setTimeout(function () {
-      console.log('Timeout B');
+      console.log('Timeout C');
     }, 10000);
 
     // once we are done with our asynchronous event, call done()
@@ -52,9 +52,9 @@ timer.setTimeout(function (done) {
 }, 10000);
 
 // schedule two other events, where Timeout B occurs at the same time as
-// Timeout A, and Timeout D occurs at the same time as Timeout B.
+// Timeout A, and Timeout D occurs at the same time as Timeout C.
 timer.setTimeout(function () {
-  console.log('Timeout C');
+  console.log('Timeout B');
 
   timer.setTimeout(function () {
     console.log('Timeout D');
@@ -66,9 +66,10 @@ timer.setTimeout(function () {
 //
 // Output will be:
 //   Timeout A
-//   Timeout C
+//   The temperature in Rotterdam is 10.56 celsius
 //   Timeout B
+//   Timeout C
 //   Timeout D
 //
-// Without asynchronous timeout, the order would have been A C D B due to
-// the asynchronous task inside Timeout B.
+// Without asynchronous timeout, the order would have been A B D C due to
+// the asynchronous task inside Timeout A.

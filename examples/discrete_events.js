@@ -8,15 +8,15 @@ timer.setTimeout(function () {
   console.log('Timeout A');
 
   timer.setTimeout(function () {
-    console.log('Timeout B');
+    console.log('Timeout D');
   }, 20000);
 
   timer.setTimeout(function () {
-    console.log('Timeout C');
+    console.log('Timeout B');
   }, 10000);
 
   timer.setTimeout(function () {
-    console.log('Timeout D');
+    console.log('Timeout C');
   }, 10000);
 
 }, 10000);
@@ -26,6 +26,6 @@ timer.setTimeout(function () {
 //
 // Output will be:
 //   Timeout A
+//   Timeout B
 //   Timeout C
 //   Timeout D
-//   Timeout B

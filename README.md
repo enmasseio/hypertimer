@@ -17,11 +17,12 @@ Hypertimer offers time control for simulations. With simulations, it's important
 
     > A discrete-event simulation (DES), models the operation of a system as a discrete sequence of events in time. Each event occurs at a particular instant in time and marks a change of state in the system. Between consecutive events, no change in the system is assumed to occur; thus the simulation can directly jump in time from one event to the next.
 
-`hypertimer` makes it possible to run in "[hypertime](http://en.wikipedia.org/wiki/Hypertime)". It can be used for *discrete simulations*, *discrete event simulations*, and animations. It allows to run a timer at a faster or slower pace than real-time, or run a discrete event simulation jumping from event to event.
+`hypertimer` makes it possible to run in "[hypertime](http://en.wikipedia.org/wiki/Hypertime)". It can be used for *discrete simulations*, *discrete event simulations*, and *animations*. It allows to run a timer at a faster or slower pace than real-time, or run a discrete event simulation jumping from event to event.
 
 Hypertimer offers basic functionality to control time:
 
-- Get and set the time using functions `getTime()`, `setTime()`, and `now()`. 
+- Configure rate and time on construction or via the function `config()`.
+- Get simulated time using functions `getTime()` or `now()`.
 - Schedule events using functions `setTimeout()`, `setInterval()`, and `setTrigger()`.
 
 These functions are compatible with JavaScript's built-in functions `Date.now()`, `setTimeout()`, and `setInterval()`, with the difference that they can use a simulated time rather than the system time.
@@ -48,8 +49,10 @@ Install via bower:
 ```js
 var hypertimer = require('hypertimer');
 
-var timer = hypertimer({rate: 1});
-timer.setTime(new Date(2014, 0, 1));
+var timer = hypertimer({
+  rate: 1,
+  time: new Date(2014, 0, 1)
+});
 ```
 
 ### browser
@@ -62,8 +65,10 @@ timer.setTime(new Date(2014, 0, 1));
 </head>
 <body>
   <script>
-    var timer = hypertimer({rate: 1});
-    timer.setTime(new Date(2014, 0, 1));
+    var timer = hypertimer({
+      rate: 1,
+      time: new Date(2014, 0, 1)
+    });
   </script>
 </body>
 </html>
@@ -106,10 +111,13 @@ var timer4 = hypertimer({rate: 'discrete-event', deterministic: false});
 Hypertimer offers functions to get and set time:
 
 ```js
-var timer = hypertimer();
+// create a hypertimer with the initial time at 14st of February 2015
+var timer = hypertimer({
+  time: new Date(2015, 1, 14, 12, 0, 0)
+});
 
-// set the time at 1st of January 2050
-timer.setTime(new Date(2050, 0, 1, 12, 0, 0));
+// change the time to the 1st of January 2050
+timer.config({time: new Date(2050, 0, 1, 12, 0, 0)});
 
 // get the time as Date
 console.log(timer.getTime());  // Returns a date, Sat Jan 01 2050 12:00:00 GMT+0100 (CET)
@@ -150,16 +158,17 @@ Hypertimer has three functions to schedule events:
 - `setInterval(callback, interval [, firstTime])`  
   Schedule a callback to be triggered once every interval. `interval` is a number in milliseconds. Optionally, a `firstTime` can be provided.
 
-On creation, the trigger time of the events is calculated from the `delay`, `interval`, and/or `firstTime`, and the event is scheduled to occur at that moment in time. When the time of the hypertimer is changed via `setTime()`, trigger time of running timeouts will not be adjusted.
+On creation, the trigger time of the events is calculated from the `delay`, `interval`, and/or `firstTime`, and the event is scheduled to occur at that moment in time. When the time of the hypertimer is changed via configuration, trigger time of running timeouts will not be adjusted.
 
 The functions `setTimeout()`, `setTrigger()`, and `setInterval()` return a timeout id, which can be used to cancel a timeout using the functions `clearTimeout()`, `clearTrigger()`, and `clearInterval()` respectively. To cancel all scheduled events at once, the function `clear()` can be called.
 
 ```js
-// create a hypertimer running ten times faster than real-time
-var timer = hypertimer({rate: 10});
-
+// create a hypertimer running ten times faster than real-time,
 // start the timer at 1st of January 2050
-timer.setTime(new Date(2050, 0, 1, 12, 0, 0));
+var timer = hypertimer({
+  rate: 10,
+  time: new Date(2050, 0, 1, 12, 0, 0)
+});
 
 console.log('start', timer.getTime());      // start Sat Jan 01 2050 12:00:00 GMT+0100 (CET)
 
@@ -271,8 +280,9 @@ Available options:
 
 Name          | Type                          | Default | Description
 ------------- | ----------------------------- | ------- | -----------
-rate          | number or `'discrete-event'`  | `1`     | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string `'discrete-event'` to run discrete events.
 deterministic | boolean                       | `true`  | If true, (default) events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
+rate          | number or `'discrete-event'`  | `1`     | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string `'discrete-event'` to run discrete events.
+time          | number or Date                | `null`  | Sets the simulation time. If not configured, a hypertimer is
 
 Example:
 
@@ -282,86 +292,114 @@ var timer = hypertimer({rate: 10});
 
 ### Properties
 
-- `running`
-  True when the timer is running, false when paused. See also functions `pause()` and `continue()`.
+-   `running`
+
+    True when the timer is running, false when paused. See also functions `pause()` and `continue()`.
 
 ### Methods
 
-- **`clear()`**  
-  Clear all running timeouts.
+-   **`clear()`**
 
-- **`clearTimeout(timeoutId: number)`**  
-  Cancel a timeout.
+    Clear all running timeouts.
 
-- **`clearInterval(intervalId: number)`**  
-  Cancel an interval.
+-   **`clearTimeout(timeoutId: number)`**
 
-- **`clearTrigger(triggerId: number)`**  
-  Cancel a trigger.
+    Cancel a timeout.
 
-- **`config([options: Object]): Object`**  
-  Change the configuration options of the hypertimer, and/or retrieve the current configuration. Available options:
+-   **`clearInterval(intervalId: number)`**
 
-  - `rate: number | 'discrete-event'`
-    The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string `'discrete-event'` to run discrete events. By default, rate is 1.
-  - `deterministic: boolean`  
-    If true (default), events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
+    Cancel an interval.
 
-- **`continue()`**  
-  Continue the timer when paused. The state of the timer can be retrieved via the property `running`. See also `pause()`.
+-   **`clearTrigger(triggerId: number)`**
 
-- **`getTime(): Date`**  
-  Returns the current time of the timer as Date. See also `now()`.
-  The time can be set using `setTime(time)`.
+    Cancel a trigger.
 
-- **`list()`**  
-  Returns a list with the id's of all running timeouts.
+-   **`config([options: Object]): Object`**
+
+    Change the configuration options of the hypertimer, and/or retrieve the current configuration. Available options:
+
+    -   `deterministic: boolean`
+
+        If true (default), events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
+
+    -   `rate: number | 'discrete-event'`
+
+        The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string `'discrete-event'` to run discrete events. By default, rate is 1.
+
+    -   `time: number | Date`
+
+        Set a simulation time.
+
+
+-   **`continue()`**
+
+    Continue the timer when paused. The state of the timer can be retrieved via the property `running`. See also `pause()`.
+
+-   **`getTime(): Date`**
+
+    Returns the current time of the hypertimer as Date. See also `now()`.
+    The time can be set using `config({time: ...})`.
+
+-   **`list()`**
+
+    Returns a list with the id's of all running timeouts.
   
-- **`now() : number`**  
-  Returns the current time of the timer as a number. See also `getTime()`.
+-   **`now() : number`**
 
-- **`pause()`**  
-  Pause the timer. The state of the timer can be retrieved via the property `running`. See also `continue()`.
+    Returns the current time of the timer as a number. See also `getTime()`.
 
-- **`setInterval(callback: Function, interval: number [, firstTime: Date | number])`**  
-  Trigger a callback every interval. Optionally, a start date can be provided
-  to specify the first time the callback must be triggered. The function returns an intervalId which can be used to cancel the trigger using `clearInterval()`. See also `setTimeout` and `setTrigger`. Parameters:
+-   **`pause()`**
+
+    Pause the timer. The state of the timer can be retrieved via the property `running`. See also `continue()`.
+
+-   **`setInterval(callback: Function, interval: number [, firstTime: Date | number])`**
+
+    Trigger a callback every interval. Optionally, a start date can be provided
+    to specify the first time the callback must be triggered. The function returns an intervalId which can be used to cancel the trigger using `clearInterval()`. See also `setTimeout` and `setTrigger`. Parameters:
   
-  - `callback: Function`  
-    Function executed when delay is exceeded.
-    
-  - `interval: number`  
-    Interval in milliseconds. When interval is smaller than zero or is infinity, the interval will be set to zero and triggered with a maximum rate.
-    
-  - `[firstTime: Date | number]`  
-    An optional absolute moment in time (Date) when the callback will be triggered the first time. By default, `firstTime = now() + interval`.
+    -   `callback: Function`
 
-- **`setTime(time: number | Date)`**  
-  Set the current time of the timer. Can be a Date or a timestamp. To get the current time, use `getTime()` or `now()`.
+        Function executed when delay is exceeded.
 
-- **`setTimeout(callback: Function, delay: number) : number`**  
-  Set a timeout, which is triggered when the timeout occurs in hyper-time. See also `setTrigger` and `setInterval`. The function returns a timeoutId, which can be used to cancel the timeout using `clearTimeout(timeoutId)`. The parameters are:
+    -   `interval: number`
+
+        Interval in milliseconds. When interval is smaller than zero or is infinity, the interval will be set to zero and triggered with a maximum rate.
+
+    -   `[firstTime: Date | number]`
+
+        An optional absolute moment in time (Date) when the callback will be triggered the first time. By default, `firstTime = now() + interval`.
+
+-   **`setTimeout(callback: Function, delay: number) : number`**
+
+    Set a timeout, which is triggered when the timeout occurs in hyper-time. See also `setTrigger` and `setInterval`. The function returns a   timeoutId, which can be used to cancel the timeout using `clearTimeout(timeoutId)`. The parameters are:
   
-  - `callback: Function`  
-    Function executed when the delay is exceeded
-    
-  - `delay: number`  
-    The delay in milliseconds. When the delay is smaller or equal to zero, the callback is triggered immediately.
+    -   `callback: Function`
 
-- **`setTrigger(callback: Function, time: Date | number) : number`**  
-  Set a trigger, which is triggered when the timeout occurs in hyper-time. See also `getTimeout`. The function returns a triggerId which can be used to cancel the trigger using `clearTrigger()`. The parameters are:
+        Function executed when the delay is exceeded
 
-  - `callback: Function`  
-    Function executed when delay is exceeded.
+    -   `delay: number`
+
+        The delay in milliseconds. When the delay is smaller or equal to zero, the callback is triggered immediately.
+
+-   **`setTrigger(callback: Function, time: Date | number) : number`**
+
+    Set a trigger, which is triggered when the timeout occurs in hyper-time. See also `getTimeout`. The function returns a triggerId which can be used to cancel the trigger using `clearTrigger()`. The parameters are:
+
+  -   `callback: Function`
+
+      Function executed when delay is exceeded.
     
-  - `time: Date | number`  
-    An absolute moment in time (Date) when the callback will be triggered. When the date is a Date in the past, the callback is triggered immediately.
+  -   `time: Date | number`
+
+      An absolute moment in time (Date) when the callback will be triggered. When the date is a Date in the past, the callback is triggered immediately.
     
-- **`toString() : String`**  
-  Return a string representation of the current hyper-time, equal to `timer.getTime().toString()`.
+-   **`toString() : String`**
+
+    Return a string representation of the current hyper-time, equal to `timer.getTime().toString()`.
   
-- **`valueOf() : Date`**  
-  Get the value of the hypertimer, returns the current time of the timer as Date.
+-   **`valueOf() : Date`**
+
+    Get the value of the hypertimer, returns the current time of the timer as Date.
 
 
 ## Examples
