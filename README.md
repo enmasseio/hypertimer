@@ -98,8 +98,8 @@ var timer2 = hypertimer();
 // adjust the rate later on
 timer2.config({rate: 1/2});
 
-// create a hypertimer running discrete events (time will jump
-// from scheduled event to scheduled event)
+// create a hypertimer running discrete events
+// (time will jump from scheduled event to scheduled event)
 var timer3 = hypertimer({rate: 'discrete-event'});
 
 // create a hypertimer running discrete events with non-deterministic behavior
@@ -282,7 +282,7 @@ Name          | Type                          | Default | Description
 ------------- | ----------------------------- | ------- | -----------
 deterministic | boolean                       | `true`  | If true, (default) events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
 rate          | number or `'discrete-event'`  | `1`     | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string `'discrete-event'` to run discrete events.
-time          | number or Date                | `null`  | Sets the simulation time. If not configured, a hypertimer is
+time          | number or Date                | `null`  | Sets the simulation time. If not configured, a hypertimer is instantiated with the system time.
 
 Example:
 
