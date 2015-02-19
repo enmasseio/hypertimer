@@ -3,7 +3,7 @@ hypertimer
 
 Hypertimer offers time control for simulations and animations. Hypertimer can be used to:
 
-- Run in an unpaced mode for *simulations*: the time jumps from scheduled event to the next scheduled event, unrolling all events as fast as possible. This can be used with discrete event simulations and with discretized simulations of continuous systems.
+- Run in an unpaced mode for *simulations*: the time jumps from scheduled event to the next scheduled event, unrolling all events as fast as possible. This can for example be used with discrete event simulations.
 - Run in a paced mode for *animations* or *real-time* applications: the time proceeds at a continuous, configurable rate. Time can run at a faster or slower pace than real-time, and can run in the past, current, or future.
 
 Hypertimer offers basic functionality to control time:
