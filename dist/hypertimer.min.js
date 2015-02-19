@@ -6,7 +6,7 @@
  *
  * Run a timer at a faster or slower pace than real-time, or run discrete events.
  *
- * @version 2.0.0
+ * @version 2.0.1
  * @date    2015-02-19
  *
  * @license

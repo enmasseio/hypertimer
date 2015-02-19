@@ -1,6 +1,11 @@
 # History
 
 
+## 2015-02-19, version 2.0.1
+
+- Added missing development dependency `async` again.
+
+
 ## 2015-02-19, version 2.0.0
 
 - Added a new option `paced: boolean` to distinguish running in paced mode
