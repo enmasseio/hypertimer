@@ -37,6 +37,9 @@ describe('hypertimer', function () {
     it('should get configuration', function () {
       var timer = hypertimer();
       assert.deepEqual(timer.config(), {paced: true, rate: 1, deterministic: true, time: null});
+
+      var timer2 = hypertimer({paced: false, rate: 2, deterministic: false, time: 2524651200000});
+      assert.deepEqual(timer2.config(), {paced: false, rate: 2, deterministic: false, time: '2050-01-01T12:00:00.000Z'});
     });
 
     it('should set configuration', function () {
@@ -93,10 +96,19 @@ describe('hypertimer', function () {
       approx(timer.getTime(), new Date(2050, 0, 1));
     });
 
+    it ('should set the current hyper-time from an ISO string', function () {
+      var time = '2050-01-01T12:00:00.000Z';
+      var timer = hypertimer({
+        rate: 1,
+        time: time
+      });
+      approx(timer.getTime(), new Date(time));
+    });
+
     it ('should throw an error in case of invalid variable', function () {
       var timer = hypertimer({rate: 1});
-      assert.throws(function () {timer.config({time:'bla'})}, /Invalid time "bla". Time must be a Date or number/);
-      assert.throws(function () {timer.config({time:{}})}, /Invalid time \{}. Time must be a Date or number/);
+      assert.throws(function () {timer.config({time:'bla'})}, /Invalid date "bla". Date, number, or ISOString expected/);
+      assert.throws(function () {timer.config({time:{}})}, /Invalid date \{}. Date, number, or ISOString expected/);
     });
 
     it ('should get the current hyper-time as Date', function () {

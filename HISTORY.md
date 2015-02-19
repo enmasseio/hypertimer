@@ -1,6 +1,13 @@
 # History
 
 
+## not yet released, version 2.1.0
+
+- Added support for ISOString dates for configuration of time, for using
+  `setInterval`, and for `setTrigger`. The time returned from config is always
+  an ISOString.
+
+
 ## 2015-02-19, version 2.0.1
 
 - Added missing development dependency `async` again.

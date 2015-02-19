@@ -99,12 +99,10 @@ Hypertimer offers functions to get and set time:
 
 ```js
 // create a hypertimer with the initial time at 14st of February 2015
-var timer = hypertimer({
-  time: new Date(2015, 1, 14, 12, 0, 0)
-});
+var timer = hypertimer({time: '2015-01-14T12:00:00.000Z'});
 
 // change the time to the 1st of January 2050
-timer.config({time: new Date(2050, 0, 1, 12, 0, 0)});
+timer.config({time: '2050-01-01T12:00:00.000Z'});
 
 // get the time as Date
 console.log(timer.getTime());  // Returns a date, Sat Jan 01 2050 12:00:00 GMT+0100 (CET)
@@ -270,7 +268,7 @@ Name          | Type                          | Default   | Description
 deterministic | boolean                       | `true`    | If true, (default) events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
 paced         | boolean                       | `true`    | Mode for pacing of time. When paced, the time proceeds at a continuous, configurable rate, useful for animation purposes. When unpaced, the time jumps immediately from scheduled event to the next scheduled event.
 rate          | number                        | 1         | The rate of progress of time with respect to real-time. Rate must be a positive number. For example when 2, the time of the hypertimer runs twice as fast as real-time. Only applicable when option paced is true.
-time          | number or Date                | `null`  | Sets the simulation time. If not configured, a hypertimer is instantiated with the system time.
+time          | number, Date, or ISO string   | `null`  | Sets the simulation time. If not configured, a hypertimer is instantiated with the system time.
 
 Example:
 
@@ -318,7 +316,7 @@ var timer = hypertimer({rate: 10});
 
         The rate of progress of time with respect to real-time. Rate must be a positive number, and is 1 by default. For example when 2, the time of the hypertimer runs twice as fast as real-time. Only applicable when option paced is true.
 
-    -   `time: number | Date`
+    -   `time: number | Date | String`
 
         Set a simulation time.
 
@@ -344,7 +342,7 @@ var timer = hypertimer({rate: 10});
 
     Pause the timer. The state of the timer can be retrieved via the property `running`. See also `continue()`.
 
--   **`setInterval(callback: Function, interval: number [, firstTime: Date | number])`**
+-   **`setInterval(callback: Function, interval: number [, firstTime: Date | number | ISOString])`**
 
     Trigger a callback every interval. Optionally, a start date can be provided
     to specify the first time the callback must be triggered. The function returns an intervalId which can be used to cancel the trigger using `clearInterval()`. See also `setTimeout` and `setTrigger`. Parameters:
@@ -373,7 +371,7 @@ var timer = hypertimer({rate: 10});
 
         The delay in milliseconds. When the delay is smaller or equal to zero, the callback is triggered immediately.
 
--   **`setTrigger(callback: Function, time: Date | number) : number`**
+-   **`setTrigger(callback: Function, time: Date | number | ISOString ) : number`**
 
     Set a trigger, which is triggered when the timeout occurs in hyper-time. See also `getTimeout`. The function returns a triggerId which can be used to cancel the trigger using `clearTrigger()`. The parameters are:
 
