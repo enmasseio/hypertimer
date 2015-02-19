@@ -3,8 +3,9 @@
 
 ## not yet released, version 2.0.0
 
-- Renamed option `rate: 'discrete'` to `rate: 'discrete-event'`, and improved
-  the readme regarding discrete and discrete event simulations.
+- Added a new option `paced: boolean` to distinguish running in paced mode
+  or in unpaced (as fast as possible) mode. Option `rate` can now only be
+  a number and is only applicable when `paced: true`.
 - Removed method `setTime`, time can be configured on construction or with
   the function `config({time: ...})`.
 

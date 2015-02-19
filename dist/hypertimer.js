@@ -7,7 +7,7 @@
  * Run a timer at a faster or slower pace than real-time, or run discrete events.
  *
  * @version 1.1.2-SNAPSHOT
- * @date    2015-02-13
+ * @date    2015-02-19
  *
  * @license
  * Copyright (C) 2014-2015 Almende B.V., http://almende.com
@@ -96,26 +96,38 @@ return /******/ (function(modules) { // webpackBootstrap
     TRIGGER: 2
   };
 
-  var DES = 'discrete-event';
-
   /**
    * Create a new hypertimer
    * @param {Object} [options]  The following options are available:
-   *                            rate: number | 'discrete-event'
-   *                                        The rate of speed of hyper time with
-   *                                        respect to real-time in milliseconds
-   *                                        per millisecond. Rate must be a
-   *                                        positive number, or 'discrete-event' to
-   *                                        run discrete events (jumping from
-   *                                        event to event). By default, rate is 1.
    *                            deterministic: boolean
    *                                        If true (default), simultaneous events
    *                                        are executed in a deterministic order.
+   *                            paced: boolean
+   *                                        Mode for pacing of time. When paced,
+   *                                        the time proceeds at a continuous,
+   *                                        configurable rate, useful for
+   *                                        animation purposes. When unpaced, the
+   *                                        time jumps immediately from scheduled
+   *                                        event to the next scheduled event.
+   *                            rate: number
+   *                                        The rate of progress of time with
+   *                                        respect to real-time. Rate must be a
+   *                                        positive number, and is 1 by default.
+   *                                        For example when 2, the time of the
+   *                                        hypertimer runs twice as fast as
+   *                                        real-time.
+   *                                        Only applicable when option paced=true.
+   *                            time: number | Date
+   *                                        Set a simulation time. If not provided,
+   *                                        The timer is instantiated with the
+   *                                        current system time.
    */
   function hypertimer(options) {
     // options
+    var paced = true;
     var rate = 1;             // number of milliseconds per milliseconds
     var deterministic = true; // run simultaneous events in a deterministic order
+    var configuredTime = null;
 
     // properties
     var running = false;              // true when running
@@ -133,22 +145,39 @@ return /******/ (function(modules) { // webpackBootstrap
      * Change configuration options of the hypertimer, or retrieve current
      * configuration.
      * @param {Object} [options]  The following options are available:
-     *                            rate: number | 'discrete-event'
-     *                                        The rate of speed of hyper time with
-     *                                        respect to real-time in milliseconds
-     *                                        per millisecond. Rate must be a
-     *                                        positive number, or 'discrete-event' to
-     *                                        run discrete events (jumping from
-     *                                        event to event). By default, rate is 1.
-     *                            time: number | Date
-     *                                        Set a simulation time.
      *                            deterministic: boolean
      *                                        If true (default), simultaneous events
      *                                        are executed in a deterministic order.
+     *                            paced: boolean
+     *                                        Mode for pacing of time. When paced,
+     *                                        the time proceeds at a continuous,
+     *                                        configurable rate, useful for
+     *                                        animation purposes. When unpaced, the
+     *                                        time jumps immediately from scheduled
+     *                                        event to the next scheduled event.
+     *                            rate: number
+     *                                        The rate of progress of time with
+     *                                        respect to real-time. Rate must be a
+     *                                        positive number, and is 1 by default.
+     *                                        For example when 2, the time of the
+     *                                        hypertimer runs twice as fast as
+     *                                        real-time.
+     *                                        Only applicable when option paced=true.
+     *                            time: number | Date
+     *                                        Set a simulation time.
      * @return {Object} Returns the applied configuration
      */
     timer.config = function(options) {
       if (options) {
+        if ('deterministic' in options) {
+          deterministic = options.deterministic ? true : false;
+        }
+
+        if ('paced' in options) {
+          paced = options.paced ? true : false;
+        }
+
+        // important: apply time before rate
         if ('time' in options) {
           if (options.time instanceof Date) {
             hyperTime = options.time.valueOf();
@@ -156,25 +185,22 @@ return /******/ (function(modules) { // webpackBootstrap
           else {
             var newTime = Number(options.time);
             if (isNaN(newTime)) {
-              throw new TypeError('time must be a Date or number');
+              throw new TypeError('Invalid time ' + JSON.stringify(options.time) + '. Time must be a Date or number');
             }
             hyperTime = newTime;
           }
+          configuredTime = options.time;
         }
 
         if ('rate' in options) {
-          var newRate = (options.rate === DES) ? DES : Number(options.rate);
-          if (newRate !== DES && (isNaN(newRate) || newRate <= 0)) {
-            throw new TypeError('rate must be a positive number or the string "' + DES + '"');
+          var newRate = Number(options.rate);
+          if (isNaN(newRate) || newRate <= 0) {
+            throw new TypeError('Invalid rate ' + JSON.stringify(options.rate) + '. Rate must be a positive number');
           }
 
-          hyperTime = timer.now(); // TODO: remove this line?
+          hyperTime = timer.now();
           realTime = util.systemNow();
           rate = newRate;
-        }
-
-        if ('deterministic' in options) {
-          deterministic = options.deterministic ? true : false;
         }
       }
 
@@ -183,8 +209,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
       // return a copy of the configuration options
       return {
+        paced: paced,
         rate: rate,
-        deterministic: deterministic
+        deterministic: deterministic,
+        time: configuredTime
       };
     };
 
@@ -194,10 +222,7 @@ return /******/ (function(modules) { // webpackBootstrap
      * @return {number} The time
      */
     timer.now = function () {
-      if (rate === DES) {
-        return hyperTime;
-      }
-      else {
+      if (paced) {
         if (running) {
           // TODO: implement performance.now() / process.hrtime(time) for high precision calculation of time interval
           var realInterval = util.systemNow() - realTime;
@@ -207,6 +232,9 @@ return /******/ (function(modules) { // webpackBootstrap
         else {
           return hyperTime;
         }
+      }
+      else {
+        return hyperTime;
       }
     };
 
@@ -479,7 +507,7 @@ return /******/ (function(modules) { // webpackBootstrap
         // remove the timeout from the queue with timeouts in progress
         delete current[timeout.id];
 
-        if (typeof callback === 'function') callback();
+        callback && callback();
       }
 
       // execute the callback
@@ -527,9 +555,9 @@ return /******/ (function(modules) { // webpackBootstrap
      */
     function _schedule() {
       // do not _schedule when there are timeouts in progress
-      // this can be the case with async timeouts in discrete time.
+      // this can be the case with async timeouts in non-paced mode.
       // _schedule will be executed again when all async timeouts are finished.
-      if (rate === DES && Object.keys(current).length > 0) {
+      if (!paced && Object.keys(current).length > 0) {
         return;
       }
 
@@ -545,12 +573,12 @@ return /******/ (function(modules) { // webpackBootstrap
         // schedule next timeout
         var time = next.time;
         var delay = time - timer.now();
-        var realDelay = (rate === DES) ? 0 : delay / rate;
+        var realDelay = paced ? delay / rate : 0;
 
         function onTimeout() {
-          // when running in discrete event simulation, update the hyperTime to the time
-          // of the current event
-          if (rate === DES) {
+          // when running in non-paced mode, update the hyperTime to
+          // adjust the time of the current event
+          if (!paced) {
             hyperTime = (time > hyperTime && isFinite(time)) ? time : hyperTime;
           }
 
@@ -559,8 +587,16 @@ return /******/ (function(modules) { // webpackBootstrap
           // note: expired.length can never be zero (on every change of the queue, we reschedule)
 
           // execute all expired timeouts
-          if (rate === DES) {
-            // in discrete event simulation, we execute all expired timeouts serially,
+          if (paced) {
+            // in paced mode, we fire all timeouts in parallel,
+            // and don't await their completion (they can do async operations)
+            expired.forEach(_execTimeout);
+
+            // schedule the next round
+            _schedule();
+          }
+          else {
+            // in non-paced mode, we execute all expired timeouts serially,
             // and wait for their completion in order to guarantee deterministic
             // order of execution
             function next() {
@@ -574,14 +610,6 @@ return /******/ (function(modules) { // webpackBootstrap
               }
             }
             next();
-          }
-          else {
-            // in continuous time, we fire all timeouts in parallel,
-            // and don't await their completion (they can do async operations)
-            expired.forEach(_execTimeout);
-
-            // schedule the next round
-            _schedule();
           }
         }
 

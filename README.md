@@ -1,27 +1,14 @@
 hypertimer
 ==========
 
-Hypertimer offers time control for simulations. With simulations, it's important to be able to manipulate the time. There are a number of different categories of simulations:
+Hypertimer offers time control for simulations and animations. Hypertimer can be used to:
 
--   [Continuous simulation](http://en.wikipedia.org/wiki/Continuous_simulation), used for simulating any system with continuous phenomena. From Wikipedia:
-
-    > Continuous Simulation refers to a computer model of a physical system that continuously tracks system response according to a set of equations typically involving differential equations.
-
--   [Discrete simulation](http://en.wikipedia.org/wiki/Continuous_simulation#Dissociation), relying upon countable phenomena. From Wikipedia:
-
-    > Discrete simulation relies upon countable phenomena like the number of individuals in a group, the number of darts thrown, or the number of nodes in a Directed graph.
-    > [...]
-    > Discrete simulations may be applied to represent continuous phenomena, but the resulting simulations produce approximate results.
-
--   [Discrete event simulation](http://en.wikipedia.org/wiki/Discrete_event_simulation), used for event-based simulations. From Wikipedia:
-
-    > A discrete-event simulation (DES), models the operation of a system as a discrete sequence of events in time. Each event occurs at a particular instant in time and marks a change of state in the system. Between consecutive events, no change in the system is assumed to occur; thus the simulation can directly jump in time from one event to the next.
-
-`hypertimer` makes it possible to run in "[hypertime](http://en.wikipedia.org/wiki/Hypertime)". It can be used for *discrete simulations*, *discrete event simulations*, and *animations*. It allows to run a timer at a faster or slower pace than real-time, or run a discrete event simulation jumping from event to event.
+- Run in an unpaced mode for *simulations*: the time jumps from scheduled event to the next scheduled event, unrolling all events as fast as possible. This can be used with discrete event simulations and with discretized simulations of continuous systems.
+- Run in a paced mode for *animations* or *real-time* applications: the time proceeds at a continuous, configurable rate. Time can run at a faster or slower pace than real-time, and can run in the past, current, or future.
 
 Hypertimer offers basic functionality to control time:
 
-- Configure rate and time on construction or via the function `config()`.
+- Configure pacing, rate, and time on construction or via the function `config()`.
 - Get simulated time using functions `getTime()` or `now()`.
 - Schedule events using functions `setTimeout()`, `setInterval()`, and `setTrigger()`.
 
@@ -80,10 +67,10 @@ var timer = hypertimer({
 
 A hypertimer can run in two modes:
 
-- Run at a continuous rate, at a faster, slower, or the same pace as real-time.
-- Run discrete events, jumping from event to event.
+- paced: time proceeds at a continuous, configurable rate.
+- unpaced: run as fast as possible, jumping from event to event.
 
-The mode of a hypertimer can be configured via the option `rate`, which can be a positive number to run in at a continuous pace, or the string `'discrete-event'` to run discrete events.
+Hypertimer as configuration options to set pacing, rate, time, and determinism of the timer.
 
 ```js
 // create a hypertimer running ten times faster than real-time
@@ -92,18 +79,18 @@ var timer1 = hypertimer({rate: 10});
 // retrieve the current configuration
 console.log(timer1.config());  // returns an Object {rate: 10}
 
-// create a hypertimer with the default rate (1 by default)
+// create a hypertimer with the default rate (1 by default, same speed as real-time)
 var timer2 = hypertimer();
 
 // adjust the rate later on
 timer2.config({rate: 1/2});
 
-// create a hypertimer running discrete events
+// create a hypertimer running discrete events as fast as possible (unpaced)
 // (time will jump from scheduled event to scheduled event)
-var timer3 = hypertimer({rate: 'discrete-event'});
+var timer3 = hypertimer({paced: false});
 
 // create a hypertimer running discrete events with non-deterministic behavior
-var timer4 = hypertimer({rate: 'discrete-event', deterministic: false});
+var timer4 = hypertimer({paced: false, deterministic: false});
 ```
 
 ### Getting and setting time
@@ -199,17 +186,17 @@ var id3 = timer.setInterval(function () {
 }, interval, firstTime);
 ```
 
-### Discrete event simulation
+### Pacing
 
-When running at a continuous rate, scheduled events are triggered at their scheduled (simulated) time. Between events, the timer is just waiting until the clock reaches the time of the next event. When the state of the system does not change between events, there is no need to wait. It is much faster to jump from event to the first next event. This is called a *discrete event simulation*.
+When running in paced mode, time proceeds at a continuous, configurable rate. Between events, the timer is just waiting until the clock reaches the time of the next event. This is needed for animations, but for simulations this is just wasted time (assuming that the state of the system does not change between events). When running in unpaced mode, the timer will jump from event to the first next event, as fast as possible.
 
-To create a hypertimer running discrete events, configure `rate: 'discrete-event'`. Hypertimer ensures that all scheduled events are executed in a deterministic order.
+To run in unpaced mode, configure hypertimer with `paced: false`. Hypertimer ensures that all scheduled events are executed in a deterministic order by default. When non-deterministic order is desired, the configuration option `deterministic` can be set to `false`.
 
-In the example below, the application will immediately output 'done!' and not after a delay of 10 seconds, because the timer is running discrete events and immediately jumps to the first next event.
+In the example below, the application will immediately output 'done!' and not after a delay of 10 seconds, because the timer is running in unpaced mode and immediately jumps to the first next event.
 
 ```js
-// create a hypertimer running discrete events,
-var timer = hypertimer({rate: 'discrete-event'});
+// create a hypertimer running discrete events
+var timer = hypertimer({paced: false});
 
 var delay = 10000;
 timer.setTimeout(function () {
@@ -225,7 +212,7 @@ timer.setTimeout(function () {
 //   Timeout B
 ```
 
-When performing asynchronous tasks inside a timeout, one needs to create an asynchronous timeout, which calls `done()` when all asynchronous actions are finished. This is required in order to guarantee a deterministic order of execution. When non-deterministic order is desired, the configuration option `deterministic` can be set to `false`.
+When performing asynchronous tasks inside a timeout, one needs to create an asynchronous timeout, which calls `done()` when all asynchronous actions are finished. This is required in order to guarantee a deterministic order of execution.
 
 ```js
 // asynchronous timeout
@@ -239,7 +226,7 @@ An example of using an asynchronous timeout:
 ```js
 // create a hypertimer running discrete events,
 // jumping from event to the next event.
-var timer = hypertimer({rate: 'discrete-event'});
+var timer = hypertimer({paced: false});
 
 // create an asynchronous timeout, having a callback parameter done
 timer.setTimeout(function (done) {
@@ -278,10 +265,11 @@ By default, a new hypertimer runs with real-time speed and time.
 
 Available options:
 
-Name          | Type                          | Default | Description
-------------- | ----------------------------- | ------- | -----------
-deterministic | boolean                       | `true`  | If true, (default) events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
-rate          | number or `'discrete-event'`  | `1`     | The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string `'discrete-event'` to run discrete events.
+Name          | Type                          | Default   | Description
+------------- | ----------------------------- | --------- | -----------
+deterministic | boolean                       | `true`    | If true, (default) events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
+paced         | boolean                       | `true`    | Mode for pacing of time. When paced, the time proceeds at a continuous, configurable rate, useful for animation purposes. When unpaced, the time jumps immediately from scheduled event to the next scheduled event.
+rate          | number                        | 1         | The rate of progress of time with respect to real-time. Rate must be a positive number. For example when 2, the time of the hypertimer runs twice as fast as real-time. Only applicable when option paced is true.
 time          | number or Date                | `null`  | Sets the simulation time. If not configured, a hypertimer is instantiated with the system time.
 
 Example:
@@ -322,9 +310,13 @@ var timer = hypertimer({rate: 10});
 
         If true (default), events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
 
-    -   `rate: number | 'discrete-event'`
+    -   `paced: boolean`
 
-        The rate (in milliseconds per millisecond) at which the timer runs, with respect to real-time speed. Can be a positive number, or the string `'discrete-event'` to run discrete events. By default, rate is 1.
+        Mode for pacing of time. When paced (default), the time proceeds at a continuous, configurable rate. When unpaced, the time jumps immediately from scheduled event to the next scheduled event.
+
+    -   `rate: number`
+
+        The rate of progress of time with respect to real-time. Rate must be a positive number, and is 1 by default. For example when 2, the time of the hypertimer runs twice as fast as real-time. Only applicable when option paced is true.
 
     -   `time: number | Date`
 
