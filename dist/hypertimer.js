@@ -6,7 +6,7 @@
  *
  * Run a timer at a faster or slower pace than real-time, or run discrete events.
  *
- * @version 1.1.2-SNAPSHOT
+ * @version 2.0.0
  * @date    2015-02-19
  *
  * @license
@@ -676,4 +676,4 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ }
 /******/ ])
-})
+});

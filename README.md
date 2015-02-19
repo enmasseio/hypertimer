@@ -3,7 +3,7 @@ hypertimer
 
 Hypertimer offers time control for simulations and animations. Hypertimer can be used to:
 
-- Run in an unpaced mode for *simulations*: the time jumps from scheduled event to the next scheduled event, unrolling all events as fast as possible. This can for example be used with discrete event simulations.
+- Run in an unpaced mode for *simulations*: the time jumps from scheduled event to the next scheduled event, unrolling all events as fast as possible.
 - Run in a paced mode for *animations* or *real-time* applications: the time proceeds at a continuous, configurable rate. Time can run at a faster or slower pace than real-time, and can run in the past, current, or future.
 
 Hypertimer offers basic functionality to control time:
@@ -12,7 +12,7 @@ Hypertimer offers basic functionality to control time:
 - Get simulated time using functions `getTime()` or `now()`.
 - Schedule events using functions `setTimeout()`, `setInterval()`, and `setTrigger()`.
 
-These functions are compatible with JavaScript's built-in functions `Date.now()`, `setTimeout()`, and `setInterval()`, with the difference that they can use a simulated time rather than the system time.
+These functions are compatible with JavaScript's built-in functions `Date.now()`, `setTimeout()`, and `setInterval()`, with the difference that they use a simulated time rather than the system time.
 
 Hypertimer enables writing code which can be used interchangeably in simulations as well as for real-time applications. For example, a process could predict its future state by running a simulation of itself, given a current state, its own behavior, and a model of the surrounding world.
 

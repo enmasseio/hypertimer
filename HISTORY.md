@@ -1,7 +1,7 @@
 # History
 
 
-## not yet released, version 2.0.0
+## 2015-02-19, version 2.0.0
 
 - Added a new option `paced: boolean` to distinguish running in paced mode
   or in unpaced (as fast as possible) mode. Option `rate` can now only be
