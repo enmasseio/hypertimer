@@ -6,6 +6,8 @@
 - Added support for ISOString dates for configuration of time, for using
   `setInterval`, and for `setTrigger`. The time returned from config is always
   an ISOString.
+- Fixed intervals expanding all occurrences when changing the timer time
+  to a moment in the future.
 
 
 ## 2015-02-19, version 2.0.1

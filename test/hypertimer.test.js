@@ -36,10 +36,10 @@ describe('hypertimer', function () {
 
     it('should get configuration', function () {
       var timer = hypertimer();
-      assert.deepEqual(timer.config(), {paced: true, rate: 1, deterministic: true, time: null});
+      assert.deepEqual(timer.config(), {paced: true, rate: 1, deterministic: true, time: null, master: null});
 
       var timer2 = hypertimer({paced: false, rate: 2, deterministic: false, time: 2524651200000});
-      assert.deepEqual(timer2.config(), {paced: false, rate: 2, deterministic: false, time: '2050-01-01T12:00:00.000Z'});
+      assert.deepEqual(timer2.config(), {paced: false, rate: 2, deterministic: false, time: '2050-01-01T12:00:00.000Z', master: null});
     });
 
     it('should set configuration', function () {
@@ -686,6 +686,30 @@ describe('hypertimer', function () {
       }, 50);
     });
 
+    it('should adjust an interval when the timers time is adjusted', function (done) {
+      var logs = [];
+      var timer = hypertimer({time: '2050-01-01T12:00:00.000Z'});
+
+      timer.setInterval(function () {
+        logs.push(timer.getTime())
+      }, 100);
+
+      // jump 10 sec in the future
+      setTimeout(function () {
+        timer.config({time: '2050-01-01T12:00:10.050Z'});
+      }, 250);
+
+      setTimeout(function () {
+        assert.equal(logs.length, 3);
+        approx(logs[0], new Date('2050-01-01T12:00:00.100Z'));
+        approx(logs[1], new Date('2050-01-01T12:00:00.200Z'));
+        approx(logs[2], new Date('2050-01-01T12:00:10.100Z'));
+
+        done();
+      }, 350);
+
+    });
+
     it('should set an interval with firstTime', function (done) {
       var timer = hypertimer({
         rate: 1,
@@ -1230,7 +1254,7 @@ describe('hypertimer', function () {
       }, 2000);
     });
 
-    it('should execute timeouts in non-deterministic order', function () {
+    it('should execute timeouts in non-deterministic order', function (done) {
       var timer = hypertimer({paced: false, deterministic: false});
 
       var ids = [];
