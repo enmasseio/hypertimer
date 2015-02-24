@@ -392,6 +392,51 @@ var timer = hypertimer({rate: 10});
     Get the value of the hypertimer, returns the current time of the timer as Date.
 
 
+### Events
+
+
+Available options:
+
+Event     | Description
+--------- | -----------
+config    | Triggered when the configuration is changed. Called with the new configuration as first argument, and the previous configuration as second argument.
+error     | Triggered when an error occurred, for example when one of the timout callbacks throws an Error.
+
+Methods:
+
+-   **`emit(event: string, ...args: *)`**
+
+    Emit an event.
+
+-   **`on(event: string, callback: function)`**
+
+    Register a listener for an event
+
+-   **`once(event: string, callback: function)`**
+
+    Register a listener for an event, which will be invoked only once and is removed after that.
+
+-   **`off(event: string, callback: function)`**
+
+    Unregister a listener for an event
+
+
+Example:
+
+```js
+var timer = hypertimer();
+
+timer.on('config', function (curr, prev)) {
+  console.log('config changed. old config:', prev, ', new config:', curr);
+});
+
+timer.on('error', function (err)) {
+  console.log('Error:', err);
+});
+```
+
+
+
 ## Examples
 
 Examples can be found here:

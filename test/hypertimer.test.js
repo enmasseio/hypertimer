@@ -5,6 +5,8 @@ var async = require('async');
 var seed = require('seed-random');
 var hypertimer = require('../lib/hypertimer');
 
+// TODO: split hypertimer.test.js in separate files, it has grown too large
+
 /**
  * Assert whether two dates are approximately equal.
  * Throws an assertion error when the dates are not approximately equal.
@@ -1354,5 +1356,40 @@ describe('hypertimer', function () {
     timer.clear();
     assert.deepEqual(timer.list(), []);
   });
+
+  describe('events', function () {
+    it('should emit a config event', function () {
+      var logs1 = [];
+      var logs2 = [];
+
+      var timer = hypertimer();
+      timer.on('config', function (curr, prev) {
+        logs1.push(curr);
+        logs2.push(prev);
+      });
+
+      var config = timer.config({paced: false, deterministic: false});
+
+      assert.deepEqual(config, { paced: false, rate: 1, deterministic: false, time: null, master: null });
+      assert.deepEqual(logs1, [{ paced: false, rate: 1, deterministic: false, time: null, master: null }]);
+      assert.deepEqual(logs2, [{ paced: true, rate: 1, deterministic: true, time: null, master: null }]);
+    });
+
+    it('should emit an error event', function (done) {
+      var timer = hypertimer();
+
+      timer.on('error', function (err) {
+        assert.equal(err.toString(), 'ReferenceError: a is not defined');
+        done();
+      });
+
+      timer.setTimeout(function() {
+        a + 2; // will throw an ReferenceError : a is not defined
+      }, 0);
+    });
+
+  });
+
+  // TODO: should test master/slave
 
 });
