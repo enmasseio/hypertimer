@@ -688,7 +688,7 @@ describe('hypertimer', function () {
       }, 50);
     });
 
-    it('should adjust an interval when the timers time is adjusted', function (done) {
+    it('should adjust an interval when the timers time is adjusted into the future', function (done) {
       var logs = [];
       var timer = hypertimer({time: '2050-01-01T12:00:00.000Z'});
 
@@ -696,7 +696,7 @@ describe('hypertimer', function () {
         logs.push(timer.getTime())
       }, 100);
 
-      // jump 10 sec in the future
+      // jump ~10 sec in the future
       setTimeout(function () {
         timer.config({time: '2050-01-01T12:00:10.050Z'});
       }, 250);
@@ -705,6 +705,30 @@ describe('hypertimer', function () {
         approx(logs[0], new Date('2050-01-01T12:00:00.100Z'));
         approx(logs[1], new Date('2050-01-01T12:00:00.200Z'));
         approx(logs[2], new Date('2050-01-01T12:00:10.100Z'));
+        assert.equal(logs.length, 3);
+
+        done();
+      }, 350);
+
+    });
+
+    it('should adjust an interval when the timers time is adjusted into the past', function (done) {
+      var logs = [];
+      var timer = hypertimer({time: '2050-01-01T12:00:00.000Z'});
+
+      timer.setInterval(function () {
+        logs.push(timer.getTime())
+      }, 100);
+
+      // jump ~10 sec in the past
+      setTimeout(function () {
+        timer.config({time: '2050-01-01T11:00:50.050Z'});
+      }, 250);
+
+      setTimeout(function () {
+        approx(logs[0], new Date('2050-01-01T12:00:00.100Z'));
+        approx(logs[1], new Date('2050-01-01T12:00:00.200Z'));
+        approx(logs[2], new Date('2050-01-01T11:00:50.100Z'));
         assert.equal(logs.length, 3);
 
         done();
