@@ -16,7 +16,7 @@ var hypertimer = require('../lib/hypertimer');
  */
 function approx(date1, date2, epsilon) {
   assert(Math.abs(date1 - date2) < (epsilon === undefined ? 25 : epsilon),
-      date1.toISOString() + ' ~= ' + date2.toISOString());
+      (date1 && date1.toISOString()) + ' ~= ' + (date2 && date2.toISOString()));
 }
 
 describe('approx', function () {
@@ -702,10 +702,10 @@ describe('hypertimer', function () {
       }, 250);
 
       setTimeout(function () {
-        assert.equal(logs.length, 3);
         approx(logs[0], new Date('2050-01-01T12:00:00.100Z'));
         approx(logs[1], new Date('2050-01-01T12:00:00.200Z'));
         approx(logs[2], new Date('2050-01-01T12:00:10.100Z'));
+        assert.equal(logs.length, 3);
 
         done();
       }, 350);
@@ -751,7 +751,31 @@ describe('hypertimer', function () {
           assert.deepEqual(timer.list(), []);
           done();
         }
-      }, 100, firstTime.valueOf());
+      }, 100, firstTime);
+    });
+
+    it('should set an interval with a firstTime in the past', function (done) {
+      var timer = hypertimer({time: '2050-01-01T12:00:00Z'});
+
+      var occurrence = 0;
+      var interval = timer.setInterval(function () {
+        occurrence++;
+
+        try {
+          if (occurrence == 1) approx(timer.getTime(), new Date('2050-01-01T12:00:00.000Z'));
+          if (occurrence == 2) approx(timer.getTime(), new Date('2050-01-01T12:00:00.100Z'));
+          if (occurrence == 3) approx(timer.getTime(), new Date('2050-01-01T12:00:00.200Z'));
+
+          if (occurrence == 3) {
+            timer.clearInterval(interval);
+            assert.deepEqual(timer.list(), []);
+            done();
+          }
+        }
+        catch (err) {
+          done(err);
+        }
+      }, 100, '2015-01-01');
     });
 
     it('should clear an interval using clearInterval', function (done) {
@@ -1358,21 +1382,22 @@ describe('hypertimer', function () {
   });
 
   describe('events', function () {
-    it('should emit a config event', function () {
-      var logs1 = [];
-      var logs2 = [];
-
-      var timer = hypertimer();
-      timer.on('config', function (curr, prev) {
-        logs1.push(curr);
-        logs2.push(prev);
-      });
-
-      var config = timer.config({paced: false, deterministic: false});
-
-      assert.deepEqual(config, { paced: false, rate: 1, deterministic: false, time: null, master: null });
-      assert.deepEqual(logs1, [{ paced: false, rate: 1, deterministic: false, time: null, master: null }]);
-      assert.deepEqual(logs2, [{ paced: true, rate: 1, deterministic: true, time: null, master: null }]);
+    it.skip('should emit a config event', function () {
+      // TODO: only emitted when changed by the master timer
+      //var logs1 = [];
+      //var logs2 = [];
+      //
+      //var timer = hypertimer();
+      //timer.on('config', function (curr, prev) {
+      //  logs1.push(curr);
+      //  logs2.push(prev);
+      //});
+      //
+      //var config = timer.config({paced: false, deterministic: false});
+      //
+      //assert.deepEqual(config, { paced: false, rate: 1, deterministic: false, time: null, master: null });
+      //assert.deepEqual(logs1, [{ paced: false, rate: 1, deterministic: false, time: null, master: null }]);
+      //assert.deepEqual(logs2, [{ paced: true, rate: 1, deterministic: true, time: null, master: null }]);
     });
 
     it('should emit an error event', function (done) {
