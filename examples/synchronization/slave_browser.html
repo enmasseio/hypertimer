@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <!-- Load es6-shim for Promise support -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/es6-shim/0.25.3/es6-shim.min.js"></script>
+
+  <script src="../../dist/hypertimer.js"></script>
+</head>
+<body>
+  <div id="logs"></div>
+
+  <script>
+    var logs = [];
+    function log () {
+      var args = [];
+      for (var i = 0; i < arguments.length; i++) {
+        var arg = arguments[i];
+        args[i] = ((typeof arg === 'string') ? arg : JSON.stringify(arg)) + ' ';
+      }
+
+      logs.unshift(args.join(' '));
+
+      document.getElementById('logs').innerHTML = logs.join('<br>');
+    }
+
+    // create a hypertimer slave, connect to a master
+    // all configuration and the current time will be retrieved from the master
+    // hypertimer
+    var timer = hypertimer({
+      master: 'ws://10.10.1.148:8081'
+    });
+
+    timer.on('error', function (err) {
+      log('Error:', err);
+    });
+
+    timer.on('config', function (config) {
+      log('Config changed:', JSON.stringify(config));
+    });
+
+    // initially, the system time is returned as we're not yet connected to the master
+    log('start', timer.getTime().toISOString());
+
+    // set an interval. as soon as the timer is connected to the master timer,
+    // time and rate will jump to the masters configuration.
+    var interval = 1000; // milliseconds
+    timer.setInterval(function () {
+      log('time', timer.getTime().toISOString());
+    }, interval, '2015-01-01');
+
+  </script>
+</body>
+</html>

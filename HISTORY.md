@@ -7,6 +7,8 @@
   `setInterval`, and for `setTrigger`. The time returned from config is always
   an ISOString.
 - Implemented events `'config'` and `'error'`.
+- Implemented support for synchronization between multiple hypertimers in
+  a master/slave configuration.
 - Fixed intervals expanding all occurrences when changing the timer time
   to a moment in the future.
 

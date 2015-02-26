@@ -399,7 +399,7 @@ Available options:
 
 Event     | Description
 --------- | -----------
-config    | Triggered when the configuration is changed. Called with the new configuration as first argument, and the previous configuration as second argument.
+config    | Triggered when the configuration is changed by the master timer. Called with the new configuration as first argument, and the previous configuration as second argument.
 error     | Triggered when an error occurred, for example when one of the timout callbacks throws an Error.
 
 Methods:
