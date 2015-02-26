@@ -783,9 +783,9 @@ describe('hypertimer', function () {
 
       var occurrence = 0;
       var interval = timer.setInterval(function () {
-        occurrence++;
-
         try {
+          occurrence++;
+
           if (occurrence == 1) approx(timer.getTime(), new Date('2050-01-01T12:00:00.000Z'));
           if (occurrence == 2) approx(timer.getTime(), new Date('2050-01-01T12:00:00.100Z'));
           if (occurrence == 3) approx(timer.getTime(), new Date('2050-01-01T12:00:00.200Z'));
@@ -797,6 +797,7 @@ describe('hypertimer', function () {
           }
         }
         catch (err) {
+          timer.clearInterval(interval);
           done(err);
         }
       }, 100, '2015-01-01');

@@ -266,7 +266,9 @@ Available options:
 Name          | Type                          | Default   | Description
 ------------- | ----------------------------- | --------- | -----------
 deterministic | boolean                       | `true`    | If true, (default) events taking place at the same time are executed in a deterministic order: in the same order they where created. If false, they are executed in a randomized order.
+master        | string                        | null      | The url of a master hypertimer, for example `"ws://localhost:8081"`. If configured, the hypertimer will run as a slave, and synchronize it's configuration and time with its masters configuration and time.
 paced         | boolean                       | `true`    | Mode for pacing of time. When paced, the time proceeds at a continuous, configurable rate, useful for animation purposes. When unpaced, the time jumps immediately from scheduled event to the next scheduled event.
+port          | number                        | null      | If provided, the hypertimer will open a websocket on the given port. The hypertimer will than act as a master. Multiple hypertimer slaves can connect to a master.
 rate          | number                        | 1         | The rate of progress of time with respect to real-time. Rate must be a positive number. For example when 2, the time of the hypertimer runs twice as fast as real-time. Only applicable when option paced is true.
 time          | number, Date, or ISO string   | `null`  | Sets the simulation time. If not configured, a hypertimer is instantiated with the system time.
 
