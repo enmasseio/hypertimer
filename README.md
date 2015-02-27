@@ -248,6 +248,11 @@ timer.setTimeout(function (done) {
 //   Timeout B
 ```
 
+### Synchronization
+
+
+
+
 
 ## API
 
