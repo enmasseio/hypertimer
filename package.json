@@ -42,7 +42,7 @@
   "scripts": {
     "build": "gulp",
     "watch": "gulp watch",
-    "test": "mocha test --recursive",
+    "test": "mocha test --recursive --compilers js:babel/register",
     "coverage": "istanbul cover _mocha -- test --recursive; echo \"\nCoverage report is available at ./coverage/lcov-report/index.html\""
   }
 }

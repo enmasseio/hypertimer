@@ -3,7 +3,7 @@
 var assert = require('assert');
 var async = require('async');
 var seed = require('seed-random');
-var hypertimer = require('../dist/hypertimer');
+var hypertimer = require('../index');
 
 // TODO: split hypertimer.test.js in separate files, it has grown too large
 
