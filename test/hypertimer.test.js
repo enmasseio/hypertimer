@@ -1407,23 +1407,7 @@ describe('hypertimer', function () {
   });
 
   describe('events', function () {
-    it.skip('should emit a config event', function () {
-      // TODO: only emitted when changed by the master timer
-      //var logs1 = [];
-      //var logs2 = [];
-      //
-      //var timer = hypertimer();
-      //timer.on('config', function (curr, prev) {
-      //  logs1.push(curr);
-      //  logs2.push(prev);
-      //});
-      //
-      //var config = timer.config({paced: false, deterministic: false});
-      //
-      //assert.deepEqual(config, { paced: false, rate: 1, deterministic: false, time: null, master: null });
-      //assert.deepEqual(logs1, [{ paced: false, rate: 1, deterministic: false, time: null, master: null }]);
-      //assert.deepEqual(logs2, [{ paced: true, rate: 1, deterministic: true, time: null, master: null }]);
-    });
+    // note: the `config` event is tested for in synchronization.test.js
 
     it('should emit an error event', function (done) {
       var timer = hypertimer();

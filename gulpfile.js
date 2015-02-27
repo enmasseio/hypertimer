@@ -35,11 +35,6 @@ var webpackConfig = {
     filename: LIB_JS,
     sourcePrefix: '  '
   },
-  module: {
-    loaders: [
-      {test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader'}
-    ]
-  },
   plugins: [ bannerPlugin ],
   externals: {ws: 'ws', debug: 'debug'},
   cache: true
