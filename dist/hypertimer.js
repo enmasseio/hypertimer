@@ -6,7 +6,7 @@
  *
  * Run a timer at a faster or slower pace than real-time, or run discrete events.
  *
- * @version 2.0.1
+ * @version 2.1.0
  * @date    2015-02-27
  *
  * @license
@@ -33,7 +33,7 @@
 		exports["hypertimer"] = factory(require("ws"), require("debug"));
 	else
 		root["hypertimer"] = factory(root["ws"], root["debug"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_21__, __WEBPACK_EXTERNAL_MODULE_38__) {
+})(this, function(__WEBPACK_EXTERNAL_MODULE_13__, __WEBPACK_EXTERNAL_MODULE_14__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -80,21 +80,18 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-  "use strict";
-
   module.exports = __webpack_require__(1);
+
 
 /***/ },
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-  "use strict";
-
-  var emitter = __webpack_require__(2);
-  var hasListeners = __webpack_require__(17);
-  var createMaster = __webpack_require__(19).createMaster;
-  var createSlave = __webpack_require__(34).createSlave;
-  var util = __webpack_require__(37);
+  var emitter = __webpack_require__(5);
+  var hasListeners = __webpack_require__(6);
+  var createMaster = __webpack_require__(2).createMaster;
+  var createSlave = __webpack_require__(3).createSlave;
+  var util = __webpack_require__(4);
 
   // enum for type of timeout
   var TYPE = {
@@ -132,20 +129,20 @@ return /******/ (function(modules) { // webpackBootstrap
   function hypertimer(options) {
     // options
     var paced = true;
-    var rate = 1; // number of milliseconds per milliseconds
+    var rate = 1;             // number of milliseconds per milliseconds
     var deterministic = true; // run simultaneous events in a deterministic order
-    var configuredTime = null; // only used for returning the configured time on .config()
+    var configuredTime = null;// only used for returning the configured time on .config()
     var master = null;
     var slave = null;
 
     // properties
-    var running = false; // true when running
-    var startTime = null; // timestamp. the moment in real-time when hyperTime was set
+    var running = false;              // true when running
+    var startTime = null;             // timestamp. the moment in real-time when hyperTime was set
     var hyperTime = util.systemNow(); // timestamp. the start time in hyper-time
-    var timeouts = []; // array with all running timeouts
-    var current = {}; // the timeouts currently in progress (callback is being executed)
-    var timeoutId = null; // currently running timer
-    var idSeq = 0; // counter for unique timeout id's
+    var timeouts = [];                // array with all running timeouts
+    var current = {};                 // the timeouts currently in progress (callback is being executed)
+    var timeoutId = null;             // currently running timer
+    var idSeq = 0;                    // counter for unique timeout id's
 
     // exported timer object with public functions and variables
     // add event-emitter mixin
@@ -177,8 +174,9 @@ return /******/ (function(modules) { // webpackBootstrap
      *                                        Set a simulation time.
      * @return {Object} Returns the applied configuration
      */
-    timer.config = function (options) {
+    timer.config = function(options) {
       if (options) {
+        _validateConfig(options);
         _setConfig(options);
       }
 
@@ -198,10 +196,12 @@ return /******/ (function(modules) { // webpackBootstrap
           var realInterval = util.systemNow() - startTime;
           var hyperInterval = realInterval * rate;
           return hyperTime + hyperInterval;
-        } else {
+        }
+        else {
           return hyperTime;
         }
-      } else {
+      }
+      else {
         return hyperTime;
       }
     };
@@ -209,7 +209,7 @@ return /******/ (function(modules) { // webpackBootstrap
     /**
      * Continue the timer.
      */
-    timer["continue"] = function () {
+    timer['continue'] = function() {
       startTime = util.systemNow();
       running = true;
 
@@ -220,7 +220,7 @@ return /******/ (function(modules) { // webpackBootstrap
     /**
      * Pause the timer. The timer can be continued again with `continue()`
      */
-    timer.pause = function () {
+    timer.pause = function() {
       hyperTime = timer.now();
       startTime = null;
       running = false;
@@ -234,7 +234,7 @@ return /******/ (function(modules) { // webpackBootstrap
      * See also now().
      * @return {Date} The time
      */
-    timer.getTime = function () {
+    timer.getTime = function() {
       return new Date(timer.now());
     };
 
@@ -262,11 +262,11 @@ return /******/ (function(modules) { // webpackBootstrap
      * @return {number} Returns a timeoutId which can be used to cancel the
      *                  timeout using clearTimeout().
      */
-    timer.setTimeout = function (callback, delay) {
+    timer.setTimeout = function(callback, delay) {
       var id = idSeq++;
       var timestamp = timer.now() + delay;
       if (isNaN(timestamp)) {
-        throw new TypeError("delay must be a number");
+        throw new TypeError('delay must be a number');
       }
 
       // add a new timeout to the queue
@@ -313,6 +313,7 @@ return /******/ (function(modules) { // webpackBootstrap
       return id;
     };
 
+
     /**
      * Trigger a callback every interval. Optionally, a start date can be provided
      * to specify the first time the callback must be triggered.
@@ -329,21 +330,23 @@ return /******/ (function(modules) { // webpackBootstrap
      * @return {number} Returns a intervalId which can be used to cancel the
      *                  trigger using clearInterval().
      */
-    timer.setInterval = function (callback, interval, firstTime) {
+    timer.setInterval = function(callback, interval, firstTime) {
       var id = idSeq++;
 
       var _interval = Number(interval);
       if (isNaN(_interval)) {
-        throw new TypeError("interval must be a number");
+        throw new TypeError('interval must be a number');
       }
       if (_interval < 0 || !isFinite(_interval)) {
         _interval = 0;
       }
 
-      var _firstTime = firstTime != undefined ? toTimestamp(firstTime) : null;
+      var _firstTime = (firstTime != undefined) ?
+          toTimestamp(firstTime) :
+          null;
 
       var now = timer.now();
-      var _time = _firstTime != null ? _firstTime : now + _interval;
+      var _time = (_firstTime != null) ? _firstTime : (now + _interval);
 
       var timeout = {
         id: id,
@@ -373,7 +376,7 @@ return /******/ (function(modules) { // webpackBootstrap
      * Cancel a timeout
      * @param {number} timeoutId   The id of a timeout
      */
-    timer.clearTimeout = function (timeoutId) {
+    timer.clearTimeout = function(timeoutId) {
       // test whether timeout is currently being executed
       if (current[timeoutId]) {
         delete current[timeoutId];
@@ -439,14 +442,32 @@ return /******/ (function(modules) { // webpackBootstrap
      *                Returns a copy of the current configuration
      * @private
      */
-    function _getConfig() {
+    function _getConfig () {
       return {
         paced: paced,
         rate: rate,
         deterministic: deterministic,
         time: configuredTime,
         master: master
-      };
+      }
+    }
+
+    /**
+     * Validate configuration, depending on the current mode: slave or normal
+     * @param {Object} options
+     * @private
+     */
+    function _validateConfig (options) {
+      // validate writable options
+      if (slave || options.master) {
+        // when we are a slave, we can't adjust the config, except for
+        // changing the master url or becoming a master itself (port configured)
+        for (var prop in options) {
+          if (prop !== 'master' && prop !== 'slave') {
+            throw new Error('Cannot apply configuration option "'  + prop +'", timer is configured as slave.');
+          }
+        }
+      }
     }
 
     /**
@@ -455,16 +476,16 @@ return /******/ (function(modules) { // webpackBootstrap
      * @private
      */
     function _setConfig(options) {
-      if ("deterministic" in options) {
+      if ('deterministic' in options) {
         deterministic = options.deterministic ? true : false;
       }
 
-      if ("paced" in options) {
+      if ('paced' in options) {
         paced = options.paced ? true : false;
       }
 
       // important: apply time before rate
-      if ("time" in options) {
+      if ('time' in options) {
         hyperTime = toTimestamp(options.time);
         startTime = util.systemNow();
 
@@ -474,10 +495,10 @@ return /******/ (function(modules) { // webpackBootstrap
         configuredTime = new Date(hyperTime).toISOString();
       }
 
-      if ("rate" in options) {
+      if ('rate' in options) {
         var newRate = Number(options.rate);
         if (isNaN(newRate) || newRate <= 0) {
-          throw new TypeError("Invalid rate " + JSON.stringify(options.rate) + ". Rate must be a positive number");
+          throw new TypeError('Invalid rate ' + JSON.stringify(options.rate) + '. Rate must be a positive number');
         }
 
         // important: first get the new hyperTime, then adjust the startTime
@@ -486,58 +507,40 @@ return /******/ (function(modules) { // webpackBootstrap
         rate = newRate;
       }
 
-      if ("master" in options) {
-        var url;
-        var timesyncOptions;
+      if ('master' in options) {
+        // create a timesync slave, connect to master via a websocket
+        if (slave) {
+          slave.destroy();
+          slave = null;
+        }
 
-        (function () {
-          var applyConfig = function (config) {
+        if (options.master) {
+          slave = createSlave(options.master);
+
+          function applyConfig(config) {
             var prev = _getConfig();
             _setConfig(config);
             var curr = _getConfig();
-            timer.emit("config", curr, prev);
-          };
-
-          timesyncOptions = {};
-
-          if (typeof options.master === "string") {
-            url = options.master;
-          } else {
-            url = options.master.url;
-            for (prop in options.master) {
-              if (options.master.hasOwnProperty(prop) && prop !== "url") {
-                timesyncOptions[prop] = options.master.prop;
-              }
-            }
+            timer.emit('config', curr, prev);
           }
 
-          // create a timesync slave, connect to master via a websocket
-          if (slave) {
-            slave.destroy();
-          }
-          slave = createSlave(url);
-
-          slave.on("change", function (time) {
-            return applyConfig({ time: time });
-          });
-          slave.on("config", function (config) {
-            return applyConfig(config);
-          });
-          slave.on("error", function (err) {
-            return timer.emit("error", err);
-          });
-        })();
+          slave.on('change', function (time)   { applyConfig({time: time}) });
+          slave.on('config', function (config) { applyConfig(config) });
+          slave.on('error',  function (err)    { timer.emit('error', err) });
+        }
       }
 
       // create a master
-      if ("port" in options) {
+      if ('port' in options) {
         if (master) {
           master.destroy();
+          master = null;
         }
-        master = createMaster(timer.now, timer.config, options.port);
-        master.on("error", function (err) {
-          return timer.emit("error", err);
-        });
+
+        if (options.port) {
+          master = createMaster(timer.now, timer.config, options.port);
+          master.on('error', function (err) { timer.emit('error', err) });
+        }
       }
 
       // reschedule running timeouts
@@ -570,7 +573,7 @@ return /******/ (function(modules) { // webpackBootstrap
      * @private
      */
     function _rescheduleInterval(timeout, now) {
-      timeout.occurrence = Math.ceil((now - timeout.firstTime) / timeout.interval);
+      timeout.occurrence = Math.round((now - timeout.firstTime) / timeout.interval);
       timeout.time = timeout.firstTime + timeout.occurrence * timeout.interval;
     }
 
@@ -592,7 +595,8 @@ return /******/ (function(modules) { // webpackBootstrap
         // inserted *after* existing timeouts with the exact *same* time,
         // so the order in which they are executed is deterministic
         timeouts.splice(i + 1, 0, timeout);
-      } else {
+      }
+      else {
         // queue is empty, append the new timeout
         timeouts.push(timeout);
       }
@@ -639,10 +643,11 @@ return /******/ (function(modules) { // webpackBootstrap
         }
       } catch (err) {
         // emit or log the error
-        if (hasListeners(timer, "error")) {
-          timer.emit("error", err);
-        } else {
-          console.log("Error", err);
+        if (hasListeners(timer, 'error')) {
+          timer.emit('error', err);
+        }
+        else {
+          console.log('Error', err);
         }
 
         finish();
@@ -658,7 +663,7 @@ return /******/ (function(modules) { // webpackBootstrap
      */
     function _getExpiredTimeouts(time) {
       var i = 0;
-      while (i < timeouts.length && (timeouts[i].time <= time || !isFinite(timeouts[i].time))) {
+      while (i < timeouts.length && ((timeouts[i].time <= time) || !isFinite(timeouts[i].time))) {
         i++;
       }
       var expired = timeouts.splice(0, i);
@@ -693,11 +698,16 @@ return /******/ (function(modules) { // webpackBootstrap
       }
 
       if (running && next) {
-        var onTimeout = function () {
+        // schedule next timeout
+        var time = next.time;
+        var delay = time - timer.now();
+        var realDelay = paced ? delay / rate : 0;
+
+        function onTimeout() {
           // when running in non-paced mode, update the hyperTime to
           // adjust the time of the current event
           if (!paced) {
-            hyperTime = time > hyperTime && isFinite(time) ? time : hyperTime;
+            hyperTime = (time > hyperTime && isFinite(time)) ? time : hyperTime;
           }
 
           // grab all expired timeouts from the queue
@@ -712,31 +722,24 @@ return /******/ (function(modules) { // webpackBootstrap
 
             // schedule the next round
             _schedule();
-          } else {
-            (function () {
-              var next =
-              // in non-paced mode, we execute all expired timeouts serially,
-              // and wait for their completion in order to guarantee deterministic
-              // order of execution
-              function () {
-                var timeout = expired.shift();
-                if (timeout) {
-                  _execTimeout(timeout, next);
-                } else {
-                  // schedule the next round
-                  _schedule();
-                }
-              };
-
-              next();
-            })();
           }
-        };
-
-        // schedule next timeout
-        var time = next.time;
-        var delay = time - timer.now();
-        var realDelay = paced ? delay / rate : 0;
+          else {
+            // in non-paced mode, we execute all expired timeouts serially,
+            // and wait for their completion in order to guarantee deterministic
+            // order of execution
+            function next() {
+              var timeout = expired.shift();
+              if (timeout) {
+                _execTimeout(timeout, next);
+              }
+              else {
+                // schedule the next round
+                _schedule();
+              }
+            }
+            next();
+          }
+        }
 
         timeoutId = setTimeout(onTimeout, Math.round(realDelay));
         // Note: Math.round(realDelay) is to defeat a bug in node.js v0.10.30,
@@ -752,39 +755,269 @@ return /******/ (function(modules) { // webpackBootstrap
      * @return {number} Returns a unix timestamp, a number
      */
     function toTimestamp(date) {
-      var value = typeof date === "number" ? date : // number
-      date instanceof Date ? date.valueOf() : // Date
-      new Date(date).valueOf(); // ISOString, momentjs, ...
+      var value =
+          (typeof date === 'number') ? date :           // number
+          (date instanceof Date)     ? date.valueOf() : // Date
+          new Date(date).valueOf();                     // ISOString, momentjs, ...
 
       if (isNaN(value)) {
-        throw new TypeError("Invalid date " + JSON.stringify(date) + ". " + "Date, number, or ISOString expected");
+        throw new TypeError('Invalid date ' + JSON.stringify(date) + '. ' +
+            'Date, number, or ISOString expected');
       }
 
       return value;
     }
 
-    Object.defineProperty(timer, "running", {
-      get: function get() {
+    Object.defineProperty(timer, 'running', {
+      get: function () {
         return running;
       }
     });
 
-    timer.config(options); // apply options
-    timer["continue"](); // start the timer
+    timer.config(options);  // apply options
+    timer.continue();       // start the timer
 
     return timer;
   }
 
   module.exports = hypertimer;
 
+
 /***/ },
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
+  var WebSocket = __webpack_require__(7);
+  var emitter = __webpack_require__(8);
+  var debug = __webpack_require__(9)('hypertimer:master');
+
+  exports.createMaster = function (now, config, port) {
+    var master = new WebSocket.Server({port: port});
+
+    master.on('connection', function (ws) {
+      debug('new connection');
+
+      var _emitter = emitter(ws);
+
+      // ping timesync messages (for the timesync module)
+      _emitter.on('time', function (data, callback) {
+        var time = now();
+        callback(time);
+        debug('send time ' + new Date(time).toISOString());
+      });
+
+      // send the masters config to the new connection
+      var config = sanitizedConfig();
+      debug('send config', config);
+      _emitter.send('config', config);
+
+      ws.emitter = _emitter; // used by broadcast
+    });
+
+    master.broadcast = function (event, data) {
+      debug('broadcast', event, data);
+      master.clients.forEach(function (client) {
+        client.emitter.send(event, data);
+      });
+    };
+
+    master.broadcastConfig = function () {
+      master.broadcast('config', sanitizedConfig());
+    };
+
+    master.destroy = function() {
+      master.close();
+      debug('destroyed');
+    };
+
+    function sanitizedConfig() {
+      var curr = config();
+      delete curr.time;
+      delete curr.master;
+      return curr;
+    }
+
+    debug('listening at ws://localhost:' + port);
+
+    return master;
+  };
+
+
+/***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+  var WebSocket = __webpack_require__(7);
+  var Promise = __webpack_require__(10);
+  var debug = __webpack_require__(9)('hypertimer:slave');
+  var emitter = __webpack_require__(8);
+  var stat = __webpack_require__(11);
+  var util = __webpack_require__(12);
+
+  // TODO: make these constants configurable
+  var INTERVAL = 3600000; // once an hour
+  var DELAY = 1000;       // delay between individual requests
+  var REPEAT = 5;         // number of times to request the time for determining latency
+
+  exports.createSlave = function (url) {
+    var ws = new WebSocket(url);
+    var slave = emitter(ws);
+    var isFirst = true;
+    var isDestroyed = false;
+    var syncTimer = null;
+
+    ws.onopen = function () {
+      debug('connected');
+      sync();
+      syncTimer = setInterval(sync, INTERVAL);
+    };
+
+    slave.destroy = function () {
+      isDestroyed = true;
+
+      clearInterval(syncTimer);
+      syncTimer = null;
+
+      ws.close();
+
+      debug('destroyed');
+    };
+
+    /**
+     * Sync with the time of the master. Emits a 'change' message
+     * @private
+     */
+    function sync() {
+      // retrieve latency, then wait 1 sec
+      function getLatencyAndWait() {
+        var result = null;
+
+        if (isDestroyed) {
+          return Promise.resolve(result);
+        }
+
+        return getLatency(slave)
+            .then(function (latency) { result = latency })  // store the retrieved latency
+            .catch(function (err)    { console.log(err) })  // just ignore failed requests
+            .then(function () { return util.wait(DELAY) })  // wait 1 sec
+            .then(function () { return result});            // return the retrieved latency
+      }
+
+      return util
+          .repeat(getLatencyAndWait, REPEAT)
+          .then(function (all) {
+            // filter away failed requests
+            var latencies = all.filter(function (latency) {
+              return latency !== null;
+            });
+
+            // calculate the limit for outliers
+            var limit = stat.median(latencies) + stat.std(latencies);
+
+            // filter away outliers: all latencies largereq than the mean+std
+            var filtered = latencies.filter(function (latency) {
+              return latency < limit;
+            });
+
+            // return the mean latency
+            return (filtered.length > 0) ? stat.mean(filtered) : null;
+          })
+          .then(function (latency) {
+            if (isDestroyed) {
+              return Promise.resolve(null);
+            }
+            else {
+              return slave.request('time').then(function (timestamp) {
+                var time = timestamp + latency;
+                slave.emit('change', time);
+                return time;
+              });
+            }
+          })
+          .catch(function (err) {
+            slave.emit('error', err)
+          });
+    }
+
+    /**
+     * Request the time of the master and calculate the latency from the
+     * roundtrip time
+     * @param {{request: function}} emitter
+     * @returns {Promise.<number | null>} returns the latency
+     * @private
+     */
+    function getLatency(emitter) {
+      var start = Date.now();
+
+      return emitter.request('time')
+          .then(function (timestamp) {
+            var end = Date.now();
+            var latency = (end - start) / 2;
+            var time = timestamp + latency;
+
+            // apply the first ever retrieved offset immediately.
+            if (isFirst) {
+              isFirst = false;
+              emitter.emit('change', time);
+            }
+
+            return latency;
+          })
+    }
+
+    return slave;
+  };
+
+
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+  
+  /* istanbul ignore else */
+  if (typeof Date.now === 'function') {
+    /**
+     * Helper function to get the current time
+     * @return {number} Current time
+     */
+    exports.systemNow = function () {
+      return Date.now();
+    }
+  }
+  else {
+    /**
+     * Helper function to get the current time
+     * @return {number} Current time
+     */
+    exports.systemNow = function () {
+      return new Date().valueOf();
+    }
+  }
+
+  /**
+   * Shuffle an array
+   *
+   * + Jonas Raoni Soares Silva
+   * @ http://jsfromhell.com/array/shuffle [v1.0]
+   *
+   * @param {Array} o   Array to be shuffled
+   * @returns {Array}   Returns the shuffled array
+   */
+  exports.shuffle = function (o){
+    for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+  };
+
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
   'use strict';
 
-  var d        = __webpack_require__(3)
-    , callable = __webpack_require__(16)
+  var d        = __webpack_require__(15)
+    , callable = __webpack_require__(19)
 
     , apply = Function.prototype.apply, call = Function.prototype.call
     , create = Object.create, defineProperty = Object.defineProperty
@@ -916,15 +1149,309 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 3 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
 
-  var assign        = __webpack_require__(4)
-    , normalizeOpts = __webpack_require__(11)
-    , isCallable    = __webpack_require__(12)
-    , contains      = __webpack_require__(13)
+  var isEmpty = __webpack_require__(17)
+    , value   = __webpack_require__(18)
+
+    , hasOwnProperty = Object.prototype.hasOwnProperty;
+
+  module.exports = function (obj/*, type*/) {
+  	var type;
+  	value(obj);
+  	type = arguments[1];
+  	if (arguments.length > 1) {
+  		return hasOwnProperty.call(obj, '__ee__') && Boolean(obj.__ee__[type]);
+  	}
+  	return obj.hasOwnProperty('__ee__') && !isEmpty(obj.__ee__);
+  };
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+  module.exports = (typeof window === 'undefined' || typeof window.WebSocket === 'undefined') ?
+      __webpack_require__(13) :
+      window.WebSocket;
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+  // Turn a WebSocket in an event emitter.
+  var eventEmitter = __webpack_require__(5);
+  var Promise = __webpack_require__(10);
+  var debug = __webpack_require__(9)('hypertimer:socket');
+
+  var TIMEOUT = 60000; // ms
+  // TODO: make timeout a configuration setting
+
+  module.exports = function (socket) {
+    var emitter = eventEmitter({
+      socket: socket,
+      send: send,
+      request: request
+    });
+
+    /**
+     * Send an event
+     * @param {string} event
+     * @param {*} data
+     */
+    function send (event, data) {
+      var envelope = {
+        event: event,
+        data: data
+      };
+      debug('send', envelope);
+      socket.send(JSON.stringify(envelope));
+    }
+
+    /**
+     * Request an event, await a response
+     * @param {string} event
+     * @param {*} data
+     * @return {Promise} Returns a promise which resolves with the reply
+     */
+    function request (event, data) {
+      return new Promise(function (resolve, reject) {
+        // put the data in an envelope with id
+        var id = getId();
+        var envelope = {
+          event: event,
+          id: id,
+          data: data
+        };
+
+        // add the request to the list with requests in progress
+        queue[id] = {
+          resolve: resolve,
+          reject: reject,
+          timeout: setTimeout(function () {
+            delete queue[id];
+            reject(new Error('Timeout'));
+          }, TIMEOUT)
+        };
+
+        socket.send(JSON.stringify(envelope));
+      });
+    }
+
+    /**
+     * Event handler, handles incoming messages
+     * @param {Object} event
+     */
+    socket.onmessage = function (event) {
+      var data = event.data;
+      var envelope = JSON.parse(data);
+      debug('receive', envelope);
+
+      // match the request from the id in the response
+      var request = queue[envelope.id];
+      if (request) {
+        // incoming response
+        clearTimeout(request.timeout);
+        delete queue[envelope.id];
+        request.resolve(envelope.data);
+      }
+      else if ('id' in envelope) {
+        // incoming request
+        emitter.emit(envelope.event, envelope.data, function (reply) {
+          var response = {
+            id: envelope.id,
+            data: reply
+          };
+          debug('reply', response);
+          socket.open && socket.send(JSON.stringify(response));
+        });
+      }
+      else {
+        // regular incoming message
+        emitter.emit(envelope.event, envelope.data);
+      }
+    };
+
+    var queue = {};   // queue with requests in progress
+
+    // get a unique id (simple counter)
+    function getId () {
+      return _id++;
+    }
+    var _id = 0;
+
+    return emitter;
+  };
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+  var Debug = typeof window !== 'undefined' ? window.Debug : __webpack_require__(14);
+
+  module.exports = Debug || function () {
+    // empty stub when in the browser
+    return function () {};
+  };
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+  module.exports = (typeof window === 'undefined' || typeof window.Promise === 'undefined') ?
+      __webpack_require__(16) :
+      window.Promise;
+
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+  // basic statistical functions
+
+  exports.compare = function (a, b) {
+    return a > b ? 1 : a < b ? -1 : 0;
+  };
+
+  exports.add = function (a, b) {
+    return a + b;
+  };
+
+  exports.sum = function (arr) {
+    return arr.reduce(exports.add);
+  };
+
+  exports.mean = function (arr) {
+    return exports.sum(arr) / arr.length;
+  };
+
+  exports.std = function (arr) {
+    return Math.sqrt(exports.variance(arr));
+  };
+
+  exports.variance = function (arr) {
+    if (arr.length < 2) return 0;
+
+    var _mean = exports.mean(arr);
+    return arr
+            .map(function (x) {
+              return Math.pow(x - _mean, 2)
+            })
+            .reduce(exports.add) / (arr.length - 1);
+  };
+
+  exports.median = function (arr) {
+    if (arr.length < 2) return arr[0];
+
+    var sorted = arr.slice().sort(exports.compare);
+    if (sorted.length % 2 === 0) {
+      // even
+      return (arr[arr.length / 2 - 1] + arr[arr.length / 2]) / 2;
+    }
+    else {
+      // odd
+      return arr[(arr.length - 1) / 2];
+    }
+  };
+
+
+/***/ },
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+  var Promise = __webpack_require__(10);
+
+  /**
+   * Resolve a promise after a delay
+   * @param {number} delay    A delay in milliseconds
+   * @returns {Promise} Resolves after given delay
+   */
+  exports.wait = function(delay) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, delay);
+    });
+  };
+
+  /**
+   * Repeat a given asynchronous function a number of times
+   * @param {function} fn   A function returning a promise
+   * @param {number} times
+   * @return {Promise}
+   */
+  exports.repeat = function (fn, times) {
+    return new Promise(function (resolve, reject) {
+      var count = 0;
+      var results = [];
+
+      function recurse() {
+        if (count < times) {
+          count++;
+          fn().then(function (result) {
+            results.push(result);
+            recurse();
+          })
+        }
+        else {
+          resolve(results);
+        }
+      }
+
+      recurse();
+    });
+  };
+
+  /**
+   * Repeat an asynchronous callback function whilst
+   * @param {function} condition   A function returning true or false
+   * @param {function} callback    A callback returning a Promise
+   * @returns {Promise}
+   */
+  exports.whilst = function (condition, callback) {
+    return new Promise(function (resolve, reject) {
+      function recurse() {
+        if (condition()) {
+          callback().then(function () {
+            recurse()
+          });
+        }
+        else {
+          resolve();
+        }
+      }
+
+      recurse();
+    });
+  };
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+  module.exports = __WEBPACK_EXTERNAL_MODULE_13__;
+
+/***/ },
+/* 14 */
+/***/ function(module, exports, __webpack_require__) {
+
+  module.exports = __WEBPACK_EXTERNAL_MODULE_14__;
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  var assign        = __webpack_require__(26)
+    , normalizeOpts = __webpack_require__(20)
+    , isCallable    = __webpack_require__(21)
+    , contains      = __webpack_require__(27)
 
     , d;
 
@@ -985,99 +1512,38 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 4 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
 
-  module.exports = __webpack_require__(5)()
-  	? Object.assign
-  	: __webpack_require__(6);
-
+  module.exports = __webpack_require__(22)
+  __webpack_require__(23)
+  __webpack_require__(24)
+  __webpack_require__(25)
 
 /***/ },
-/* 5 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
 
-  module.exports = function () {
-  	var assign = Object.assign, obj;
-  	if (typeof assign !== 'function') return false;
-  	obj = { foo: 'raz' };
-  	assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
-  	return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
-  };
+  var value = __webpack_require__(18)
 
+    , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
 
-/***/ },
-/* 6 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var keys  = __webpack_require__(7)
-    , value = __webpack_require__(10)
-
-    , max = Math.max;
-
-  module.exports = function (dest, src/*, …srcn*/) {
-  	var error, i, l = max(arguments.length, 2), assign;
-  	dest = Object(value(dest));
-  	assign = function (key) {
-  		try { dest[key] = src[key]; } catch (e) {
-  			if (!error) error = e;
-  		}
-  	};
-  	for (i = 1; i < l; ++i) {
-  		src = arguments[i];
-  		keys(src).forEach(assign);
+  module.exports = function (obj) {
+  	var i;
+  	value(obj);
+  	for (i in obj) { //jslint: ignore
+  		if (propertyIsEnumerable.call(obj, i)) return false;
   	}
-  	if (error !== undefined) throw error;
-  	return dest;
+  	return true;
   };
 
 
 /***/ },
-/* 7 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = __webpack_require__(8)()
-  	? Object.keys
-  	: __webpack_require__(9);
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = function () {
-  	try {
-  		Object.keys('primitive');
-  		return true;
-  	} catch (e) { return false; }
-  };
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var keys = Object.keys;
-
-  module.exports = function (object) {
-  	return keys(object == null ? object : Object(object));
-  };
-
-
-/***/ },
-/* 10 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
@@ -1089,7 +1555,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 11 */
+/* 19 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  module.exports = function (fn) {
+  	if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
+  	return fn;
+  };
+
+
+/***/ },
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
@@ -1112,7 +1590,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 12 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
   // Deprecated
@@ -1123,306 +1601,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = __webpack_require__(14)()
-  	? String.prototype.contains
-  	: __webpack_require__(15);
-
-
-/***/ },
-/* 14 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var str = 'razdwatrzy';
-
-  module.exports = function () {
-  	if (typeof str.contains !== 'function') return false;
-  	return ((str.contains('dwa') === true) && (str.contains('foo') === false));
-  };
-
-
-/***/ },
-/* 15 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var indexOf = String.prototype.indexOf;
-
-  module.exports = function (searchString/*, position*/) {
-  	return indexOf.call(this, searchString, arguments[1]) > -1;
-  };
-
-
-/***/ },
-/* 16 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = function (fn) {
-  	if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
-  	return fn;
-  };
-
-
-/***/ },
-/* 17 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var isEmpty = __webpack_require__(18)
-    , value   = __webpack_require__(10)
-
-    , hasOwnProperty = Object.prototype.hasOwnProperty;
-
-  module.exports = function (obj/*, type*/) {
-  	var type;
-  	value(obj);
-  	type = arguments[1];
-  	if (arguments.length > 1) {
-  		return hasOwnProperty.call(obj, '__ee__') && Boolean(obj.__ee__[type]);
-  	}
-  	return obj.hasOwnProperty('__ee__') && !isEmpty(obj.__ee__);
-  };
-
-
-/***/ },
-/* 18 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var value = __webpack_require__(10)
-
-    , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
-
-  module.exports = function (obj) {
-  	var i;
-  	value(obj);
-  	for (i in obj) { //jslint: ignore
-  		if (propertyIsEnumerable.call(obj, i)) return false;
-  	}
-  	return true;
-  };
-
-
-/***/ },
-/* 19 */
-/***/ function(module, exports, __webpack_require__) {
-
-  "use strict";
-
-  var WebSocket = __webpack_require__(20);
-  var emitter = __webpack_require__(22);
-  var debug = __webpack_require__(33)("hypertimer:master");
-
-  exports.createMaster = function (now, config, port) {
-    var master = new WebSocket.Server({ port: port });
-
-    master.on("connection", function (ws) {
-      debug("new connection");
-
-      var _emitter = emitter(ws);
-
-      // ping timesync messages (for the timesync module)
-      _emitter.on("time", function (data, callback) {
-        var time = now();
-        callback(time);
-        debug("send time " + new Date(time).toISOString());
-      });
-
-      // send the masters config to the new connection
-      var config = sanitizedConfig();
-      debug("send config", config);
-      _emitter.send("config", config);
-
-      ws.emitter = _emitter; // used by broadcast
-    });
-
-    master.broadcast = function (event, data) {
-      debug("broadcast", event, data);
-      master.clients.forEach(function (client) {
-        client.emitter.send(event, data);
-      });
-    };
-
-    master.broadcastConfig = function () {
-      master.broadcast("config", sanitizedConfig());
-    };
-
-    master.destroy = function () {
-      master.close();
-      debug("destroyed");
-    };
-
-    function sanitizedConfig() {
-      var curr = config();
-      delete curr.time;
-      delete curr.master;
-      return curr;
-    }
-
-    debug("listening at ws://localhost:" + port);
-
-    return master;
-  };
-
-/***/ },
-/* 20 */
-/***/ function(module, exports, __webpack_require__) {
-
-  "use strict";
-
-  module.exports = typeof window === "undefined" || typeof window.WebSocket === "undefined" ? __webpack_require__(21) : window.WebSocket;
-
-/***/ },
-/* 21 */
-/***/ function(module, exports, __webpack_require__) {
-
-  module.exports = __WEBPACK_EXTERNAL_MODULE_21__;
-
-/***/ },
 /* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
-  "use strict";
-
-  // Turn a WebSocket in an event emitter.
-  var eventEmitter = __webpack_require__(2);
-  var Promise = __webpack_require__(23);
-  var debug = __webpack_require__(33)("hypertimer:socket");
-
-  var TIMEOUT = 60000; // ms
-  // TODO: make timeout a configuration setting
-
-  module.exports = function (socket) {
-    var emitter = eventEmitter({
-      socket: socket,
-      send: send,
-      request: request
-    });
-
-    /**
-     * Send an event
-     * @param {string} event
-     * @param {*} data
-     */
-    function send(event, data) {
-      var envelope = {
-        event: event,
-        data: data
-      };
-      debug("send", envelope);
-      socket.send(JSON.stringify(envelope));
-    }
-
-    /**
-     * Request an event, await a response
-     * @param {string} event
-     * @param {*} data
-     * @return {Promise} Returns a promise which resolves with the reply
-     */
-    function request(event, data) {
-      return new Promise(function (resolve, reject) {
-        // put the data in an envelope with id
-        var id = getId();
-        var envelope = {
-          event: event,
-          id: id,
-          data: data
-        };
-
-        // add the request to the list with requests in progress
-        queue[id] = {
-          resolve: resolve,
-          reject: reject,
-          timeout: setTimeout(function () {
-            delete queue[id];
-            reject(new Error("Timeout"));
-          }, TIMEOUT)
-        };
-
-        socket.send(JSON.stringify(envelope));
-      });
-    }
-
-    /**
-     * Event handler, handles incoming messages
-     * @param {Object} event
-     */
-    socket.onmessage = function (event) {
-      var data = event.data;
-      var envelope = JSON.parse(data);
-      debug("receive", envelope);
-
-      // match the request from the id in the response
-      var request = queue[envelope.id];
-      if (request) {
-        // incoming response
-        clearTimeout(request.timeout);
-        delete queue[envelope.id];
-        request.resolve(envelope.data);
-      } else if ("id" in envelope) {
-        // incoming request
-        emitter.emit(envelope.event, envelope.data, function (reply) {
-          var response = {
-            id: envelope.id,
-            data: reply
-          };
-          debug("reply", response);
-          socket.open && socket.send(JSON.stringify(response));
-        });
-      } else {
-        // regular incoming message
-        emitter.emit(envelope.event, envelope.data);
-      }
-    };
-
-    var queue = {}; // queue with requests in progress
-
-    // get a unique id (simple counter)
-    function getId() {
-      return _id++;
-    }
-    var _id = 0;
-
-    return emitter;
-  };
-
-/***/ },
-/* 23 */
-/***/ function(module, exports, __webpack_require__) {
-
-  "use strict";
-
-  module.exports = typeof window === "undefined" || typeof window.Promise === "undefined" ? __webpack_require__(24) : window.Promise;
-
-/***/ },
-/* 24 */
-/***/ function(module, exports, __webpack_require__) {
-
   'use strict';
 
-  module.exports = __webpack_require__(25)
-  __webpack_require__(30)
-  __webpack_require__(31)
-  __webpack_require__(32)
-
-/***/ },
-/* 25 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var asap = __webpack_require__(26)
+  var asap = __webpack_require__(32)
 
   module.exports = Promise;
   function Promise(fn) {
@@ -1528,7 +1712,301 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
+/* 23 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  var Promise = __webpack_require__(22)
+  var asap = __webpack_require__(32)
+
+  module.exports = Promise
+  Promise.prototype.done = function (onFulfilled, onRejected) {
+    var self = arguments.length ? this.then.apply(this, arguments) : this
+    self.then(null, function (err) {
+      asap(function () {
+        throw err
+      })
+    })
+  }
+
+/***/ },
+/* 24 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  //This file contains the ES6 extensions to the core Promises/A+ API
+
+  var Promise = __webpack_require__(22)
+  var asap = __webpack_require__(32)
+
+  module.exports = Promise
+
+  /* Static Functions */
+
+  function ValuePromise(value) {
+    this.then = function (onFulfilled) {
+      if (typeof onFulfilled !== 'function') return this
+      return new Promise(function (resolve, reject) {
+        asap(function () {
+          try {
+            resolve(onFulfilled(value))
+          } catch (ex) {
+            reject(ex);
+          }
+        })
+      })
+    }
+  }
+  ValuePromise.prototype = Promise.prototype
+
+  var TRUE = new ValuePromise(true)
+  var FALSE = new ValuePromise(false)
+  var NULL = new ValuePromise(null)
+  var UNDEFINED = new ValuePromise(undefined)
+  var ZERO = new ValuePromise(0)
+  var EMPTYSTRING = new ValuePromise('')
+
+  Promise.resolve = function (value) {
+    if (value instanceof Promise) return value
+
+    if (value === null) return NULL
+    if (value === undefined) return UNDEFINED
+    if (value === true) return TRUE
+    if (value === false) return FALSE
+    if (value === 0) return ZERO
+    if (value === '') return EMPTYSTRING
+
+    if (typeof value === 'object' || typeof value === 'function') {
+      try {
+        var then = value.then
+        if (typeof then === 'function') {
+          return new Promise(then.bind(value))
+        }
+      } catch (ex) {
+        return new Promise(function (resolve, reject) {
+          reject(ex)
+        })
+      }
+    }
+
+    return new ValuePromise(value)
+  }
+
+  Promise.all = function (arr) {
+    var args = Array.prototype.slice.call(arr)
+
+    return new Promise(function (resolve, reject) {
+      if (args.length === 0) return resolve([])
+      var remaining = args.length
+      function res(i, val) {
+        try {
+          if (val && (typeof val === 'object' || typeof val === 'function')) {
+            var then = val.then
+            if (typeof then === 'function') {
+              then.call(val, function (val) { res(i, val) }, reject)
+              return
+            }
+          }
+          args[i] = val
+          if (--remaining === 0) {
+            resolve(args);
+          }
+        } catch (ex) {
+          reject(ex)
+        }
+      }
+      for (var i = 0; i < args.length; i++) {
+        res(i, args[i])
+      }
+    })
+  }
+
+  Promise.reject = function (value) {
+    return new Promise(function (resolve, reject) { 
+      reject(value);
+    });
+  }
+
+  Promise.race = function (values) {
+    return new Promise(function (resolve, reject) { 
+      values.forEach(function(value){
+        Promise.resolve(value).then(resolve, reject);
+      })
+    });
+  }
+
+  /* Prototype Methods */
+
+  Promise.prototype['catch'] = function (onRejected) {
+    return this.then(null, onRejected);
+  }
+
+
+/***/ },
+/* 25 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  //This file contains then/promise specific extensions that are only useful for node.js interop
+
+  var Promise = __webpack_require__(22)
+  var asap = __webpack_require__(32)
+
+  module.exports = Promise
+
+  /* Static Functions */
+
+  Promise.denodeify = function (fn, argumentCount) {
+    argumentCount = argumentCount || Infinity
+    return function () {
+      var self = this
+      var args = Array.prototype.slice.call(arguments)
+      return new Promise(function (resolve, reject) {
+        while (args.length && args.length > argumentCount) {
+          args.pop()
+        }
+        args.push(function (err, res) {
+          if (err) reject(err)
+          else resolve(res)
+        })
+        var res = fn.apply(self, args)
+        if (res && (typeof res === 'object' || typeof res === 'function') && typeof res.then === 'function') {
+          resolve(res)
+        }
+      })
+    }
+  }
+  Promise.nodeify = function (fn) {
+    return function () {
+      var args = Array.prototype.slice.call(arguments)
+      var callback = typeof args[args.length - 1] === 'function' ? args.pop() : null
+      var ctx = this
+      try {
+        return fn.apply(this, arguments).nodeify(callback, ctx)
+      } catch (ex) {
+        if (callback === null || typeof callback == 'undefined') {
+          return new Promise(function (resolve, reject) { reject(ex) })
+        } else {
+          asap(function () {
+            callback.call(ctx, ex)
+          })
+        }
+      }
+    }
+  }
+
+  Promise.prototype.nodeify = function (callback, ctx) {
+    if (typeof callback != 'function') return this
+
+    this.then(function (value) {
+      asap(function () {
+        callback.call(ctx, null, value)
+      })
+    }, function (err) {
+      asap(function () {
+        callback.call(ctx, err)
+      })
+    })
+  }
+
+
+/***/ },
 /* 26 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  module.exports = __webpack_require__(28)()
+  	? Object.assign
+  	: __webpack_require__(29);
+
+
+/***/ },
+/* 27 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  module.exports = __webpack_require__(30)()
+  	? String.prototype.contains
+  	: __webpack_require__(31);
+
+
+/***/ },
+/* 28 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  module.exports = function () {
+  	var assign = Object.assign, obj;
+  	if (typeof assign !== 'function') return false;
+  	obj = { foo: 'raz' };
+  	assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
+  	return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
+  };
+
+
+/***/ },
+/* 29 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  var keys  = __webpack_require__(33)
+    , value = __webpack_require__(18)
+
+    , max = Math.max;
+
+  module.exports = function (dest, src/*, …srcn*/) {
+  	var error, i, l = max(arguments.length, 2), assign;
+  	dest = Object(value(dest));
+  	assign = function (key) {
+  		try { dest[key] = src[key]; } catch (e) {
+  			if (!error) error = e;
+  		}
+  	};
+  	for (i = 1; i < l; ++i) {
+  		src = arguments[i];
+  		keys(src).forEach(assign);
+  	}
+  	if (error !== undefined) throw error;
+  	return dest;
+  };
+
+
+/***/ },
+/* 30 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  var str = 'razdwatrzy';
+
+  module.exports = function () {
+  	if (typeof str.contains !== 'function') return false;
+  	return ((str.contains('dwa') === true) && (str.contains('foo') === false));
+  };
+
+
+/***/ },
+/* 31 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  var indexOf = String.prototype.indexOf;
+
+  module.exports = function (searchString/*, position*/) {
+  	return indexOf.call(this, searchString, arguments[1]) > -1;
+  };
+
+
+/***/ },
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
   /* WEBPACK VAR INJECTION */(function(process, setImmediate) {
@@ -1645,10 +2123,48 @@ return /******/ (function(modules) { // webpackBootstrap
   module.exports = asap;
 
   
-  /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(27), __webpack_require__(28).setImmediate))
+  /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(36), __webpack_require__(37).setImmediate))
 
 /***/ },
-/* 27 */
+/* 33 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  module.exports = __webpack_require__(34)()
+  	? Object.keys
+  	: __webpack_require__(35);
+
+
+/***/ },
+/* 34 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  module.exports = function () {
+  	try {
+  		Object.keys('primitive');
+  		return true;
+  	} catch (e) { return false; }
+  };
+
+
+/***/ },
+/* 35 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  var keys = Object.keys;
+
+  module.exports = function (object) {
+  	return keys(object == null ? object : Object(object));
+  };
+
+
+/***/ },
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
   // shim for using process in browser
@@ -1740,10 +2256,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 28 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
-  /* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(29).nextTick;
+  /* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(38).nextTick;
   var slice = Array.prototype.slice;
   var immediateIds = {};
   var nextImmediateId = 0;
@@ -1797,10 +2313,10 @@ return /******/ (function(modules) { // webpackBootstrap
   exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
     delete immediateIds[id];
   };
-  /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(28).setImmediate, __webpack_require__(28).clearImmediate))
+  /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(37).setImmediate, __webpack_require__(37).clearImmediate))
 
 /***/ },
-/* 29 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
   // shim for using process in browser
@@ -1861,524 +2377,6 @@ return /******/ (function(modules) { // webpackBootstrap
   };
   process.umask = function() { return 0; };
 
-
-/***/ },
-/* 30 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var Promise = __webpack_require__(25)
-  var asap = __webpack_require__(26)
-
-  module.exports = Promise
-  Promise.prototype.done = function (onFulfilled, onRejected) {
-    var self = arguments.length ? this.then.apply(this, arguments) : this
-    self.then(null, function (err) {
-      asap(function () {
-        throw err
-      })
-    })
-  }
-
-/***/ },
-/* 31 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  //This file contains the ES6 extensions to the core Promises/A+ API
-
-  var Promise = __webpack_require__(25)
-  var asap = __webpack_require__(26)
-
-  module.exports = Promise
-
-  /* Static Functions */
-
-  function ValuePromise(value) {
-    this.then = function (onFulfilled) {
-      if (typeof onFulfilled !== 'function') return this
-      return new Promise(function (resolve, reject) {
-        asap(function () {
-          try {
-            resolve(onFulfilled(value))
-          } catch (ex) {
-            reject(ex);
-          }
-        })
-      })
-    }
-  }
-  ValuePromise.prototype = Promise.prototype
-
-  var TRUE = new ValuePromise(true)
-  var FALSE = new ValuePromise(false)
-  var NULL = new ValuePromise(null)
-  var UNDEFINED = new ValuePromise(undefined)
-  var ZERO = new ValuePromise(0)
-  var EMPTYSTRING = new ValuePromise('')
-
-  Promise.resolve = function (value) {
-    if (value instanceof Promise) return value
-
-    if (value === null) return NULL
-    if (value === undefined) return UNDEFINED
-    if (value === true) return TRUE
-    if (value === false) return FALSE
-    if (value === 0) return ZERO
-    if (value === '') return EMPTYSTRING
-
-    if (typeof value === 'object' || typeof value === 'function') {
-      try {
-        var then = value.then
-        if (typeof then === 'function') {
-          return new Promise(then.bind(value))
-        }
-      } catch (ex) {
-        return new Promise(function (resolve, reject) {
-          reject(ex)
-        })
-      }
-    }
-
-    return new ValuePromise(value)
-  }
-
-  Promise.all = function (arr) {
-    var args = Array.prototype.slice.call(arr)
-
-    return new Promise(function (resolve, reject) {
-      if (args.length === 0) return resolve([])
-      var remaining = args.length
-      function res(i, val) {
-        try {
-          if (val && (typeof val === 'object' || typeof val === 'function')) {
-            var then = val.then
-            if (typeof then === 'function') {
-              then.call(val, function (val) { res(i, val) }, reject)
-              return
-            }
-          }
-          args[i] = val
-          if (--remaining === 0) {
-            resolve(args);
-          }
-        } catch (ex) {
-          reject(ex)
-        }
-      }
-      for (var i = 0; i < args.length; i++) {
-        res(i, args[i])
-      }
-    })
-  }
-
-  Promise.reject = function (value) {
-    return new Promise(function (resolve, reject) { 
-      reject(value);
-    });
-  }
-
-  Promise.race = function (values) {
-    return new Promise(function (resolve, reject) { 
-      values.forEach(function(value){
-        Promise.resolve(value).then(resolve, reject);
-      })
-    });
-  }
-
-  /* Prototype Methods */
-
-  Promise.prototype['catch'] = function (onRejected) {
-    return this.then(null, onRejected);
-  }
-
-
-/***/ },
-/* 32 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  //This file contains then/promise specific extensions that are only useful for node.js interop
-
-  var Promise = __webpack_require__(25)
-  var asap = __webpack_require__(26)
-
-  module.exports = Promise
-
-  /* Static Functions */
-
-  Promise.denodeify = function (fn, argumentCount) {
-    argumentCount = argumentCount || Infinity
-    return function () {
-      var self = this
-      var args = Array.prototype.slice.call(arguments)
-      return new Promise(function (resolve, reject) {
-        while (args.length && args.length > argumentCount) {
-          args.pop()
-        }
-        args.push(function (err, res) {
-          if (err) reject(err)
-          else resolve(res)
-        })
-        var res = fn.apply(self, args)
-        if (res && (typeof res === 'object' || typeof res === 'function') && typeof res.then === 'function') {
-          resolve(res)
-        }
-      })
-    }
-  }
-  Promise.nodeify = function (fn) {
-    return function () {
-      var args = Array.prototype.slice.call(arguments)
-      var callback = typeof args[args.length - 1] === 'function' ? args.pop() : null
-      var ctx = this
-      try {
-        return fn.apply(this, arguments).nodeify(callback, ctx)
-      } catch (ex) {
-        if (callback === null || typeof callback == 'undefined') {
-          return new Promise(function (resolve, reject) { reject(ex) })
-        } else {
-          asap(function () {
-            callback.call(ctx, ex)
-          })
-        }
-      }
-    }
-  }
-
-  Promise.prototype.nodeify = function (callback, ctx) {
-    if (typeof callback != 'function') return this
-
-    this.then(function (value) {
-      asap(function () {
-        callback.call(ctx, null, value)
-      })
-    }, function (err) {
-      asap(function () {
-        callback.call(ctx, err)
-      })
-    })
-  }
-
-
-/***/ },
-/* 33 */
-/***/ function(module, exports, __webpack_require__) {
-
-  "use strict";
-
-  var Debug = typeof window !== "undefined" ? window.Debug : __webpack_require__(38);
-
-  module.exports = Debug || function () {
-    // empty stub when in the browser
-    return function () {};
-  };
-
-/***/ },
-/* 34 */
-/***/ function(module, exports, __webpack_require__) {
-
-  "use strict";
-
-  var WebSocket = __webpack_require__(20);
-  var Promise = __webpack_require__(23);
-  var debug = __webpack_require__(33)("hypertimer:slave");
-  var emitter = __webpack_require__(22);
-  var stat = __webpack_require__(35);
-  var util = __webpack_require__(36);
-
-  // TODO: make these constants configurable
-  var INTERVAL = 3600000; // once an hour
-  var DELAY = 1000; // delay between individual requests
-  var REPEAT = 5; // number of times to request the time for determining latency
-
-  exports.createSlave = function (url) {
-    var ws = new WebSocket(url);
-    var slave = emitter(ws);
-    var isFirst = true;
-    var isDestroyed = false;
-    var syncTimer = null;
-
-    ws.onopen = function () {
-      debug("connected");
-      sync();
-      syncTimer = setInterval(sync, INTERVAL);
-    };
-
-    slave.destroy = function () {
-      isDestroyed = true;
-
-      clearInterval(syncTimer);
-      syncTimer = null;
-
-      ws.close();
-
-      debug("destroyed");
-    };
-
-    /**
-     * Sync with the time of the master. Emits a 'change' message
-     * @private
-     */
-    function sync() {
-      // retrieve latency, then wait 1 sec
-      function getLatencyAndWait() {
-        var result = null;
-
-        if (isDestroyed) {
-          return Promise.resolve(result);
-        }
-
-        return getLatency(slave).then(function (latency) {
-          return result = latency;
-        }) // store the retrieved latency
-        ["catch"](function (err) {
-          return console.log(err);
-        }) // just ignore failed requests
-        .then(function () {
-          return util.wait(DELAY);
-        }) // wait 1 sec
-        .then(function () {
-          return result;
-        }); // return the retrieved latency
-      }
-
-      return util.repeat(getLatencyAndWait, REPEAT).then(function (all) {
-        // filter away failed requests
-        var latencies = all.filter(function (latency) {
-          return latency !== null;
-        });
-
-        // calculate the limit for outliers
-        var limit = stat.median(latencies) + stat.std(latencies);
-
-        // filter away outliers: all latencies largereq than the mean+std
-        var filtered = latencies.filter(function (latency) {
-          return latency < limit;
-        });
-
-        // return the mean latency
-        return filtered.length > 0 ? stat.mean(filtered) : null;
-      }).then(function (latency) {
-        if (isDestroyed) {
-          return Promise.resolve(null);
-        } else {
-          return slave.request("time").then(function (timestamp) {
-            var time = timestamp + latency;
-            slave.emit("change", time);
-            return time;
-          });
-        }
-      })["catch"](function (err) {
-        return slave.emit("error", err);
-      });
-    }
-
-    /**
-     * Request the time of the master and calculate the latency from the
-     * roundtrip time
-     * @param {{request: function}} emitter
-     * @returns {Promise.<number | null>} returns the latency
-     * @private
-     */
-    function getLatency(emitter) {
-      var start = Date.now();
-
-      return emitter.request("time").then(function (timestamp) {
-        var end = Date.now();
-        var latency = (end - start) / 2;
-        var time = timestamp + latency;
-
-        // apply the first ever retrieved offset immediately.
-        if (isFirst) {
-          isFirst = false;
-          emitter.emit("change", time);
-        }
-
-        return latency;
-      });
-    }
-
-    return slave;
-  };
-
-/***/ },
-/* 35 */
-/***/ function(module, exports, __webpack_require__) {
-
-  "use strict";
-
-  // basic statistical functions
-
-  exports.compare = compare;
-  exports.add = add;
-  exports.sum = sum;
-  exports.mean = mean;
-  exports.std = std;
-  exports.variance = variance;
-  exports.median = median;
-  function compare(a, b) {
-    return a > b ? 1 : a < b ? -1 : 0;
-  }
-
-  function add(a, b) {
-    return a + b;
-  }
-
-  function sum(arr) {
-    return arr.reduce(add);
-  }
-
-  function mean(arr) {
-    return sum(arr) / arr.length;
-  }
-
-  function std(arr) {
-    return Math.sqrt(variance(arr));
-  }
-
-  function variance(arr) {
-    if (arr.length < 2) {
-      return 0;
-    }var _mean = mean(arr);
-    return arr.map(function (x) {
-      return Math.pow(x - _mean, 2);
-    }).reduce(add) / (arr.length - 1);
-  }
-
-  function median(arr) {
-    if (arr.length < 2) {
-      return arr[0];
-    }var sorted = arr.slice().sort(compare);
-    if (sorted.length % 2 === 0) {
-      // even
-      return (arr[arr.length / 2 - 1] + arr[arr.length / 2]) / 2;
-    } else {
-      // odd
-      return arr[(arr.length - 1) / 2];
-    }
-  }
-  Object.defineProperty(exports, "__esModule", {
-    value: true
-  });
-
-/***/ },
-/* 36 */
-/***/ function(module, exports, __webpack_require__) {
-
-  "use strict";
-
-  /**
-   * Resolve a promise after a delay
-   * @param {number} delay    A delay in milliseconds
-   * @returns {Promise} Resolves after given delay
-   */
-  exports.wait = wait;
-
-  /**
-   * Repeat a given asynchronous function a number of times
-   * @param {function} fn   A function returning a promise
-   * @param {number} times
-   * @return {Promise}
-   */
-  exports.repeat = repeat;
-
-  /**
-   * Repeat an asynchronous callback function whilst
-   * @param {function} condition   A function returning true or false
-   * @param {function} callback    A callback returning a Promise
-   * @returns {Promise}
-   */
-  exports.whilst = whilst;
-  var Promise = __webpack_require__(23);function wait(delay) {
-    return new Promise(function (resolve) {
-      setTimeout(resolve, delay);
-    });
-  }function repeat(fn, times) {
-    return new Promise(function (resolve, reject) {
-      var count = 0;
-      var results = [];
-
-      function recurse() {
-        if (count < times) {
-          count++;
-          fn().then(function (result) {
-            results.push(result);
-            recurse();
-          });
-        } else {
-          resolve(results);
-        }
-      }
-
-      recurse();
-    });
-  }function whilst(condition, callback) {
-    return new Promise(function (resolve, reject) {
-      function recurse() {
-        if (condition()) {
-          callback().then(function () {
-            return recurse();
-          });
-        } else {
-          resolve();
-        }
-      }
-
-      recurse();
-    });
-  }
-  Object.defineProperty(exports, "__esModule", {
-    value: true
-  });
-
-/***/ },
-/* 37 */
-/***/ function(module, exports, __webpack_require__) {
-
-  "use strict";
-
-  /* istanbul ignore else */
-  if (typeof Date.now === "function") {
-    /**
-     * Helper function to get the current time
-     * @return {number} Current time
-     */
-    exports.systemNow = function () {
-      return Date.now();
-    };
-  } else {
-    /**
-     * Helper function to get the current time
-     * @return {number} Current time
-     */
-    exports.systemNow = function () {
-      return new Date().valueOf();
-    };
-  }
-
-  /**
-   * Shuffle an array
-   *
-   * + Jonas Raoni Soares Silva
-   * @ http://jsfromhell.com/array/shuffle [v1.0]
-   *
-   * @param {Array} o   Array to be shuffled
-   * @returns {Array}   Returns the shuffled array
-   */
-  exports.shuffle = function (o) {
-    for (var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
-    return o;
-  };
-
-/***/ },
-/* 38 */
-/***/ function(module, exports, __webpack_require__) {
-
-  module.exports = __WEBPACK_EXTERNAL_MODULE_38__;
 
 /***/ }
 /******/ ])

@@ -1,7 +1,7 @@
 # History
 
 
-## not yet released, version 2.1.0
+## 2015-02-27, version 2.1.0
 
 - Added support for ISOString dates for configuration of time, for using
   `setInterval`, and for `setTrigger`. The time returned from config is always
@@ -10,8 +10,9 @@
 - Implemented events `'config'` and `'error'`.
 - Implemented experimental support for synchronization between multiple
   hypertimers in a master/slave configuration.
-- Fixed intervals expanding all occurrences when changing the timer time
+- Fixed expanding all occurrences of intervals when changing the time
   to a moment in the future.
+- Fixed expanding all occurrences of intervals started in the past.
 
 
 ## 2015-02-19, version 2.0.1
