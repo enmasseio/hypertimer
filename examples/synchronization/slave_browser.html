@@ -27,7 +27,7 @@
     // all configuration and the current time will be retrieved from the master
     // hypertimer
     var timer = hypertimer({
-      master: 'ws://10.10.1.148:8081'
+      master: 'ws://localhost:8081'
     });
 
     timer.on('error', function (err) {

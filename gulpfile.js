@@ -41,7 +41,7 @@ var webpackConfig = {
     ]
   },
   plugins: [ bannerPlugin ],
-  externals: {ws: 'ws'},
+  externals: {ws: 'ws', debug: 'debug'},
   cache: true
 };
 

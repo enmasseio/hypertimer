@@ -250,8 +250,39 @@ timer.setTimeout(function (done) {
 
 ### Synchronization
 
+Hypertimers running on multiple machines can be synchronized in a master/slave configuration. Multiple slaves can connect to a master via a WebSocket. The slaves will synchronize their time and configuration with that of the master.
+
+    WARNING: this is an experimental feature, and currently only supportes *paced* mode.
+
+To create a master hypertimer, specify a port in the configuration. The hypertimer will open a websocket on this port.
+
+```js
+// create a master hypertimer listening on port 8081
+var masterTimer = hypertimer({port: 8081});
+```
+
+To connect to a master hypertimer, specify the url of the master in the property `master`. The created timer will than act as a slave and synchronize retrieves configuration and time from the master.
+
+```js
+// create a slave hypertimer connected to the master on port 8081
+var slaveTimer = hypertimer({master: 'ws://localhost:8081'});
+```
+
+Use the `destroy()` method to neatly shutdown master and slave timers:
+
+```
+// close all connections, clear all timeouts
+masterTimer.destroy();
+slaveTimer.destroy();
+```
 
 
+
+## Examples
+
+Examples can be found here:
+
+https://github.com/enmasseio/hypertimer/tree/master/examples
 
 
 ## API
@@ -331,6 +362,10 @@ var timer = hypertimer({rate: 10});
 -   **`continue()`**
 
     Continue the timer when paused. The state of the timer can be retrieved via the property `running`. See also `pause()`.
+
+-   **`destroy()`**
+
+    Destroy the hypertimer. Clears all timeouts, and closes any connection to master and slave hypertimers.
 
 -   **`getTime(): Date`**
 
@@ -443,12 +478,9 @@ timer.on('error', function (err)) {
 ```
 
 
+### Protocol
 
-## Examples
-
-Examples can be found here:
-
-https://github.com/enmasseio/hypertimer/tree/master/examples
+TODO: describe the protocol used to communicate between master and slaves.
 
 
 ## Roadmap

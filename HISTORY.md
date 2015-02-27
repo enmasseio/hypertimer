@@ -6,9 +6,10 @@
 - Added support for ISOString dates for configuration of time, for using
   `setInterval`, and for `setTrigger`. The time returned from config is always
   an ISOString.
+- Implemented a method `destroy`.
 - Implemented events `'config'` and `'error'`.
-- Implemented support for synchronization between multiple hypertimers in
-  a master/slave configuration.
+- Implemented experimental support for synchronization between multiple
+  hypertimers in a master/slave configuration.
 - Fixed intervals expanding all occurrences when changing the timer time
   to a moment in the future.
 

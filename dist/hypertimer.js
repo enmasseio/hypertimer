@@ -7,7 +7,7 @@
  * Run a timer at a faster or slower pace than real-time, or run discrete events.
  *
  * @version 2.0.1
- * @date    2015-02-26
+ * @date    2015-02-27
  *
  * @license
  * Copyright (C) 2014-2015 Almende B.V., http://almende.com
@@ -26,14 +26,14 @@
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
-		module.exports = factory(require("ws"));
+		module.exports = factory(require("ws"), require("debug"));
 	else if(typeof define === 'function' && define.amd)
-		define(["ws"], factory);
+		define(["ws", "debug"], factory);
 	else if(typeof exports === 'object')
-		exports["hypertimer"] = factory(require("ws"));
+		exports["hypertimer"] = factory(require("ws"), require("debug"));
 	else
-		root["hypertimer"] = factory(root["ws"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_21__) {
+		root["hypertimer"] = factory(root["ws"], root["debug"]);
+})(this, function(__WEBPACK_EXTERNAL_MODULE_21__, __WEBPACK_EXTERNAL_MODULE_38__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -93,8 +93,8 @@ return /******/ (function(modules) { // webpackBootstrap
   var emitter = __webpack_require__(2);
   var hasListeners = __webpack_require__(17);
   var createMaster = __webpack_require__(19).createMaster;
-  var createSlave = __webpack_require__(33).createSlave;
-  var util = __webpack_require__(34);
+  var createSlave = __webpack_require__(34).createSlave;
+  var util = __webpack_require__(37);
 
   // enum for type of timeout
   var TYPE = {
@@ -424,6 +424,16 @@ return /******/ (function(modules) { // webpackBootstrap
     };
 
     /**
+     * Destroy the timer. This will clear all timeouts, and close connections
+     * to a master or to slave timers.
+     */
+    timer.destroy = function () {
+      timer.clear();
+      if (slave) slave.destroy();
+      if (master) master.destroy();
+    };
+
+    /**
      * Get the current configuration
      * @returns {{paced: boolean, rate: number, deterministic: boolean, time: *, master: *}}
      *                Returns a copy of the current configuration
@@ -519,10 +529,15 @@ return /******/ (function(modules) { // webpackBootstrap
         })();
       }
 
+      // create a master
       if ("port" in options) {
-        // create a master
-        // TODO: destroy when already existing
+        if (master) {
+          master.destroy();
+        }
         master = createMaster(timer.now, timer.config, options.port);
+        master.on("error", function (err) {
+          return timer.emit("error", err);
+        });
       }
 
       // reschedule running timeouts
@@ -1206,27 +1221,34 @@ return /******/ (function(modules) { // webpackBootstrap
   "use strict";
 
   var WebSocket = __webpack_require__(20);
-  var emitterify = __webpack_require__(22);
+  var emitter = __webpack_require__(22);
+  var debug = __webpack_require__(33)("hypertimer:master");
 
   exports.createMaster = function (now, config, port) {
-    var WebSocketServer = WebSocket.Server;
-    var master = new WebSocketServer({ port: port });
+    var master = new WebSocket.Server({ port: port });
 
     master.on("connection", function (ws) {
-      var emitter = emitterify(ws);
+      debug("new connection");
+
+      var _emitter = emitter(ws);
 
       // ping timesync messages (for the timesync module)
-      emitter.on("time", function (data, callback) {
-        callback(now());
+      _emitter.on("time", function (data, callback) {
+        var time = now();
+        callback(time);
+        debug("send time " + new Date(time).toISOString());
       });
 
-      // initially send the masters config
-      emitter.send("config", sanitizedConfig());
+      // send the masters config to the new connection
+      var config = sanitizedConfig();
+      debug("send config", config);
+      _emitter.send("config", config);
 
-      ws.emitter = emitter; // used by broadcast
+      ws.emitter = _emitter; // used by broadcast
     });
 
     master.broadcast = function (event, data) {
+      debug("broadcast", event, data);
       master.clients.forEach(function (client) {
         client.emitter.send(event, data);
       });
@@ -1236,6 +1258,11 @@ return /******/ (function(modules) { // webpackBootstrap
       master.broadcast("config", sanitizedConfig());
     };
 
+    master.destroy = function () {
+      master.close();
+      debug("destroyed");
+    };
+
     function sanitizedConfig() {
       var curr = config();
       delete curr.time;
@@ -1243,17 +1270,7 @@ return /******/ (function(modules) { // webpackBootstrap
       return curr;
     }
 
-    function sendConfig(emitter) {
-      // send current config, except for the fields master and time
-      // which are not applicable for the slave. The time will be retrieved
-      // later on via a separate timesync algorithm
-      var curr = config();
-      delete curr.time;
-      delete curr.master;
-      emitter.send("config", curr);
-    }
-
-    console.log("Master listening at ws://localhost:" + port);
+    debug("listening at ws://localhost:" + port);
 
     return master;
   };
@@ -1281,6 +1298,7 @@ return /******/ (function(modules) { // webpackBootstrap
   // Turn a WebSocket in an event emitter.
   var eventEmitter = __webpack_require__(2);
   var Promise = __webpack_require__(23);
+  var debug = __webpack_require__(33)("hypertimer:socket");
 
   var TIMEOUT = 60000; // ms
   // TODO: make timeout a configuration setting
@@ -1302,6 +1320,7 @@ return /******/ (function(modules) { // webpackBootstrap
         event: event,
         data: data
       };
+      debug("send", envelope);
       socket.send(JSON.stringify(envelope));
     }
 
@@ -1342,6 +1361,7 @@ return /******/ (function(modules) { // webpackBootstrap
     socket.onmessage = function (event) {
       var data = event.data;
       var envelope = JSON.parse(data);
+      debug("receive", envelope);
 
       // match the request from the id in the response
       var request = queue[envelope.id];
@@ -1357,7 +1377,8 @@ return /******/ (function(modules) { // webpackBootstrap
             id: envelope.id,
             data: reply
           };
-          socket.send(JSON.stringify(response));
+          debug("reply", response);
+          socket.open && socket.send(JSON.stringify(response));
         });
       } else {
         // regular incoming message
@@ -2049,9 +2070,23 @@ return /******/ (function(modules) { // webpackBootstrap
 
   "use strict";
 
+  var Debug = typeof window !== "undefined" ? window.Debug : __webpack_require__(38);
+
+  module.exports = Debug || function () {
+    // empty stub when in the browser
+    return function () {};
+  };
+
+/***/ },
+/* 34 */
+/***/ function(module, exports, __webpack_require__) {
+
+  "use strict";
+
   var WebSocket = __webpack_require__(20);
   var Promise = __webpack_require__(23);
-  var emitterify = __webpack_require__(22);
+  var debug = __webpack_require__(33)("hypertimer:slave");
+  var emitter = __webpack_require__(22);
   var stat = __webpack_require__(35);
   var util = __webpack_require__(36);
 
@@ -2062,33 +2097,41 @@ return /******/ (function(modules) { // webpackBootstrap
 
   exports.createSlave = function (url) {
     var ws = new WebSocket(url);
-    var slave = emitterify(ws);
+    var slave = emitter(ws);
     var isFirst = true;
+    var isDestroyed = false;
     var syncTimer = null;
 
     ws.onopen = function () {
+      debug("connected");
       sync();
       syncTimer = setInterval(sync, INTERVAL);
     };
 
     slave.destroy = function () {
+      isDestroyed = true;
+
       clearInterval(syncTimer);
       syncTimer = null;
 
       ws.close();
-      ws = null;
+
+      debug("destroyed");
     };
 
     /**
-     * Sync with the time of the master
-     * @return {Promise.<number | null>}  Resolves with the time of the master,
-     *                                    or null if failed to sync
+     * Sync with the time of the master. Emits a 'change' message
      * @private
      */
     function sync() {
       // retrieve latency, then wait 1 sec
       function getLatencyAndWait() {
         var result = null;
+
+        if (isDestroyed) {
+          return Promise.resolve(result);
+        }
+
         return getLatency(slave).then(function (latency) {
           return result = latency;
         }) // store the retrieved latency
@@ -2120,11 +2163,15 @@ return /******/ (function(modules) { // webpackBootstrap
         // return the mean latency
         return filtered.length > 0 ? stat.mean(filtered) : null;
       }).then(function (latency) {
-        return slave.request("time").then(function (timestamp) {
-          var time = timestamp + latency;
-          slave.emit("change", time);
-          return time;
-        });
+        if (isDestroyed) {
+          return Promise.resolve(null);
+        } else {
+          return slave.request("time").then(function (timestamp) {
+            var time = timestamp + latency;
+            slave.emit("change", time);
+            return time;
+          });
+        }
       })["catch"](function (err) {
         return slave.emit("error", err);
       });
@@ -2156,45 +2203,6 @@ return /******/ (function(modules) { // webpackBootstrap
     }
 
     return slave;
-  };
-
-/***/ },
-/* 34 */
-/***/ function(module, exports, __webpack_require__) {
-
-  "use strict";
-
-  /* istanbul ignore else */
-  if (typeof Date.now === "function") {
-    /**
-     * Helper function to get the current time
-     * @return {number} Current time
-     */
-    exports.systemNow = function () {
-      return Date.now();
-    };
-  } else {
-    /**
-     * Helper function to get the current time
-     * @return {number} Current time
-     */
-    exports.systemNow = function () {
-      return new Date().valueOf();
-    };
-  }
-
-  /**
-   * Shuffle an array
-   *
-   * + Jonas Raoni Soares Silva
-   * @ http://jsfromhell.com/array/shuffle [v1.0]
-   *
-   * @param {Array} o   Array to be shuffled
-   * @returns {Array}   Returns the shuffled array
-   */
-  exports.shuffle = function (o) {
-    for (var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
-    return o;
   };
 
 /***/ },
@@ -2326,6 +2334,51 @@ return /******/ (function(modules) { // webpackBootstrap
   Object.defineProperty(exports, "__esModule", {
     value: true
   });
+
+/***/ },
+/* 37 */
+/***/ function(module, exports, __webpack_require__) {
+
+  "use strict";
+
+  /* istanbul ignore else */
+  if (typeof Date.now === "function") {
+    /**
+     * Helper function to get the current time
+     * @return {number} Current time
+     */
+    exports.systemNow = function () {
+      return Date.now();
+    };
+  } else {
+    /**
+     * Helper function to get the current time
+     * @return {number} Current time
+     */
+    exports.systemNow = function () {
+      return new Date().valueOf();
+    };
+  }
+
+  /**
+   * Shuffle an array
+   *
+   * + Jonas Raoni Soares Silva
+   * @ http://jsfromhell.com/array/shuffle [v1.0]
+   *
+   * @param {Array} o   Array to be shuffled
+   * @returns {Array}   Returns the shuffled array
+   */
+  exports.shuffle = function (o) {
+    for (var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+  };
+
+/***/ },
+/* 38 */
+/***/ function(module, exports, __webpack_require__) {
+
+  module.exports = __WEBPACK_EXTERNAL_MODULE_38__;
 
 /***/ }
 /******/ ])

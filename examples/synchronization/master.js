@@ -7,6 +7,8 @@ var timer = hypertimer({
   rate: 1/2
 });
 
+console.log('Master listening at ws://localhost:8081');
+
 // set an interval. as soon as the timer is connected to the master timer,
 // time and rate will jump to the masters configuration.
 var interval = 1000; // milliseconds

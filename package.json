@@ -20,6 +20,7 @@
   },
   "dependencies": {
     "body-parser": "^1.12.0",
+    "debug": "^2.1.1",
     "event-emitter": "^0.3.3",
     "node-uuid": "^1.4.2",
     "promise": "^6.1.0",
@@ -31,6 +32,7 @@
     "babel-core": "^4.5.5",
     "babel-loader": "^4.0.0",
     "browserify": "^8.1.3",
+    "freeport": "^1.0.4",
     "gulp": "^3.8.11",
     "gulp-util": "^3.0.3",
     "istanbul": "^0.3.6",
