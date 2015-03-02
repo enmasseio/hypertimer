@@ -7,7 +7,7 @@
  * Run a timer at a faster or slower pace than real-time, or run discrete events.
  *
  * @version 2.1.0
- * @date    2015-02-27
+ * @date    2015-03-02
  *
  * @license
  * Copyright (C) 2014-2015 Almende B.V., http://almende.com
@@ -132,8 +132,8 @@ return /******/ (function(modules) { // webpackBootstrap
     var rate = 1;             // number of milliseconds per milliseconds
     var deterministic = true; // run simultaneous events in a deterministic order
     var configuredTime = null;// only used for returning the configured time on .config()
-    var master = null;
-    var slave = null;
+    var master = null;        // url of master, will run as slave
+    var port = null;          // port to serve as master
 
     // properties
     var running = false;              // true when running
@@ -143,6 +143,8 @@ return /******/ (function(modules) { // webpackBootstrap
     var current = {};                 // the timeouts currently in progress (callback is being executed)
     var timeoutId = null;             // currently running timer
     var idSeq = 0;                    // counter for unique timeout id's
+    var server = null;
+    var client = null;
 
     // exported timer object with public functions and variables
     // add event-emitter mixin
@@ -432,8 +434,8 @@ return /******/ (function(modules) { // webpackBootstrap
      */
     timer.destroy = function () {
       timer.clear();
-      if (slave) slave.destroy();
-      if (master) master.destroy();
+      if (client) client.destroy();
+      if (server) server.destroy();
     };
 
     /**
@@ -448,7 +450,8 @@ return /******/ (function(modules) { // webpackBootstrap
         rate: rate,
         deterministic: deterministic,
         time: configuredTime,
-        master: master
+        master: master,
+        port: port
       }
     }
 
@@ -459,7 +462,7 @@ return /******/ (function(modules) { // webpackBootstrap
      */
     function _validateConfig (options) {
       // validate writable options
-      if (slave || options.master) {
+      if (client || options.master) {
         // when we are a slave, we can't adjust the config, except for
         // changing the master url or becoming a master itself (port configured)
         for (var prop in options) {
@@ -509,13 +512,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
       if ('master' in options) {
         // create a timesync slave, connect to master via a websocket
-        if (slave) {
-          slave.destroy();
-          slave = null;
+        if (client) {
+          client.destroy();
+          client = null;
         }
 
-        if (options.master) {
-          slave = createSlave(options.master);
+        master = options.master;
+        if (options.master != null) {
+          client = createSlave(options.master);
 
           function applyConfig(config) {
             var prev = _getConfig();
@@ -524,31 +528,32 @@ return /******/ (function(modules) { // webpackBootstrap
             timer.emit('config', curr, prev);
           }
 
-          slave.on('change', function (time)   { applyConfig({time: time}) });
-          slave.on('config', function (config) { applyConfig(config) });
-          slave.on('error',  function (err)    { timer.emit('error', err) });
+          client.on('change', function (time)   { applyConfig({time: time}) });
+          client.on('config', function (config) { applyConfig(config) });
+          client.on('error',  function (err)    { timer.emit('error', err) });
         }
       }
 
       // create a master
       if ('port' in options) {
-        if (master) {
-          master.destroy();
-          master = null;
+        if (server) {
+          server.destroy();
+          server = null;
         }
 
+        port = options.port;
         if (options.port) {
-          master = createMaster(timer.now, timer.config, options.port);
-          master.on('error', function (err) { timer.emit('error', err) });
+          server = createMaster(timer.now, timer.config, options.port);
+          server.on('error', function (err) { timer.emit('error', err) });
         }
       }
 
       // reschedule running timeouts
       _schedule();
 
-      if (master) {
+      if (server) {
         // broadcast changed config
-        master.broadcastConfig();
+        server.broadcastConfig();
       }
     }
 
@@ -788,7 +793,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
   var WebSocket = __webpack_require__(7);
-  var emitter = __webpack_require__(8);
+  var emitter = __webpack_require__(10);
   var debug = __webpack_require__(9)('hypertimer:master');
 
   exports.createMaster = function (now, config, port) {
@@ -834,6 +839,7 @@ return /******/ (function(modules) { // webpackBootstrap
       var curr = config();
       delete curr.time;
       delete curr.master;
+      delete curr.port;
       return curr;
     }
 
@@ -848,9 +854,9 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
   var WebSocket = __webpack_require__(7);
-  var Promise = __webpack_require__(10);
+  var Promise = __webpack_require__(8);
   var debug = __webpack_require__(9)('hypertimer:slave');
-  var emitter = __webpack_require__(8);
+  var emitter = __webpack_require__(10);
   var stat = __webpack_require__(11);
   var util = __webpack_require__(12);
 
@@ -898,7 +904,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
         return getLatency(slave)
             .then(function (latency) { result = latency })  // store the retrieved latency
-            .catch(function (err)    { console.log(err) })  // just ignore failed requests
+            .catch(function (err)    { console.log(err) })  // just log failed requests
             .then(function () { return util.wait(DELAY) })  // wait 1 sec
             .then(function () { return result});            // return the retrieved latency
       }
@@ -906,6 +912,8 @@ return /******/ (function(modules) { // webpackBootstrap
       return util
           .repeat(getLatencyAndWait, REPEAT)
           .then(function (all) {
+            debug('latencies', all);
+
             // filter away failed requests
             var latencies = all.filter(function (latency) {
               return latency !== null;
@@ -1017,7 +1025,7 @@ return /******/ (function(modules) { // webpackBootstrap
   'use strict';
 
   var d        = __webpack_require__(15)
-    , callable = __webpack_require__(19)
+    , callable = __webpack_require__(17)
 
     , apply = Function.prototype.apply, call = Function.prototype.call
     , create = Object.create, defineProperty = Object.defineProperty
@@ -1154,8 +1162,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
   'use strict';
 
-  var isEmpty = __webpack_require__(17)
-    , value   = __webpack_require__(18)
+  var isEmpty = __webpack_require__(18)
+    , value   = __webpack_require__(19)
 
     , hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -1183,9 +1191,30 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
+  module.exports = (typeof window === 'undefined' || typeof window.Promise === 'undefined') ?
+      __webpack_require__(16) :
+      window.Promise;
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+  var Debug = typeof window !== 'undefined' ? window.Debug : __webpack_require__(14);
+
+  module.exports = Debug || function () {
+    // empty stub when in the browser
+    return function () {};
+  };
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
   // Turn a WebSocket in an event emitter.
   var eventEmitter = __webpack_require__(5);
-  var Promise = __webpack_require__(10);
+  var Promise = __webpack_require__(8);
   var debug = __webpack_require__(9)('hypertimer:socket');
 
   var TIMEOUT = 60000; // ms
@@ -1238,8 +1267,9 @@ return /******/ (function(modules) { // webpackBootstrap
           }, TIMEOUT)
         };
 
+        debug('request', envelope);
         socket.send(JSON.stringify(envelope));
-      });
+      }).catch(function (err) {console.log('ERROR', err)});
     }
 
     /**
@@ -1266,8 +1296,14 @@ return /******/ (function(modules) { // webpackBootstrap
             id: envelope.id,
             data: reply
           };
-          debug('reply', response);
-          socket.open && socket.send(JSON.stringify(response));
+
+          if (socket.readyState === socket.OPEN || socket.readyState === socket.CONNECTING) {
+            debug('reply', response);
+            socket.send(JSON.stringify(response));
+          }
+          else {
+            debug('cancel reply', response, '(socket is closed)');
+          }
         });
       }
       else {
@@ -1286,27 +1322,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
     return emitter;
   };
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-  var Debug = typeof window !== 'undefined' ? window.Debug : __webpack_require__(14);
-
-  module.exports = Debug || function () {
-    // empty stub when in the browser
-    return function () {};
-  };
-
-
-/***/ },
-/* 10 */
-/***/ function(module, exports, __webpack_require__) {
-
-  module.exports = (typeof window === 'undefined' || typeof window.Promise === 'undefined') ?
-      __webpack_require__(16) :
-      window.Promise;
 
 
 /***/ },
@@ -1365,7 +1380,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
-  var Promise = __webpack_require__(10);
+  var Promise = __webpack_require__(8);
 
   /**
    * Resolve a promise after a delay
@@ -1448,7 +1463,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
   'use strict';
 
-  var assign        = __webpack_require__(26)
+  var assign        = __webpack_require__(22)
     , normalizeOpts = __webpack_require__(20)
     , isCallable    = __webpack_require__(21)
     , contains      = __webpack_require__(27)
@@ -1517,10 +1532,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
   'use strict';
 
-  module.exports = __webpack_require__(22)
-  __webpack_require__(23)
+  module.exports = __webpack_require__(23)
   __webpack_require__(24)
   __webpack_require__(25)
+  __webpack_require__(26)
 
 /***/ },
 /* 17 */
@@ -1528,7 +1543,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
   'use strict';
 
-  var value = __webpack_require__(18)
+  module.exports = function (fn) {
+  	if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
+  	return fn;
+  };
+
+
+/***/ },
+/* 18 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  var value = __webpack_require__(19)
 
     , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
 
@@ -1543,7 +1570,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
@@ -1551,18 +1578,6 @@ return /******/ (function(modules) { // webpackBootstrap
   module.exports = function (value) {
   	if (value == null) throw new TypeError("Cannot use null or undefined");
   	return value;
-  };
-
-
-/***/ },
-/* 19 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = function (fn) {
-  	if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
-  	return fn;
   };
 
 
@@ -1602,6 +1617,17 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 22 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  module.exports = __webpack_require__(28)()
+  	? Object.assign
+  	: __webpack_require__(29);
+
+
+/***/ },
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
@@ -1712,12 +1738,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 23 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
 
-  var Promise = __webpack_require__(22)
+  var Promise = __webpack_require__(23)
   var asap = __webpack_require__(32)
 
   module.exports = Promise
@@ -1731,14 +1757,14 @@ return /******/ (function(modules) { // webpackBootstrap
   }
 
 /***/ },
-/* 24 */
+/* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
 
   //This file contains the ES6 extensions to the core Promises/A+ API
 
-  var Promise = __webpack_require__(22)
+  var Promise = __webpack_require__(23)
   var asap = __webpack_require__(32)
 
   module.exports = Promise
@@ -1845,14 +1871,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 25 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
 
   //This file contains then/promise specific extensions that are only useful for node.js interop
 
-  var Promise = __webpack_require__(22)
+  var Promise = __webpack_require__(23)
   var asap = __webpack_require__(32)
 
   module.exports = Promise
@@ -1914,17 +1940,6 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 26 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = __webpack_require__(28)()
-  	? Object.assign
-  	: __webpack_require__(29);
-
-
-/***/ },
 /* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -1957,7 +1972,7 @@ return /******/ (function(modules) { // webpackBootstrap
   'use strict';
 
   var keys  = __webpack_require__(33)
-    , value = __webpack_require__(18)
+    , value = __webpack_require__(19)
 
     , max = Math.max;
 

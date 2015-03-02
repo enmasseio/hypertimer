@@ -10,8 +10,14 @@ describe('synchronization', function () {
 
       var slave = hypertimer({master: 'ws://localhost:' + port});
       slave.on('config', function (config) {
-        assert.equal(config.port, null); // should not be sent from the master
-        assert.equal(config.rate, 2);
+        assert.deepEqual(config, {
+          paced: true,
+          rate: 2,
+          deterministic: true,
+          time: null,
+          port: null,  // should not be sent from the master
+          master: 'ws://localhost:' + port
+        });
         slave.destroy();
         master.destroy();
         done();

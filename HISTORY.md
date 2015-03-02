@@ -1,6 +1,11 @@
 # History
 
 
+## 2015-03-02, version 2.1.1
+
+- Fixed replies not being send via socket.
+
+
 ## 2015-02-27, version 2.1.0
 
 - Added support for ISOString dates for configuration of time, for using

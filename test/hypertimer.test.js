@@ -38,10 +38,24 @@ describe('hypertimer', function () {
 
     it('should get configuration', function () {
       var timer = hypertimer();
-      assert.deepEqual(timer.config(), {paced: true, rate: 1, deterministic: true, time: null, master: null});
+      assert.deepEqual(timer.config(), {
+        paced: true,
+        rate: 1,
+        deterministic: true,
+        time: null,
+        master: null,
+        port: null
+      });
 
       var timer2 = hypertimer({paced: false, rate: 2, deterministic: false, time: 2524651200000});
-      assert.deepEqual(timer2.config(), {paced: false, rate: 2, deterministic: false, time: '2050-01-01T12:00:00.000Z', master: null});
+      assert.deepEqual(timer2.config(), {
+        paced: false,
+        rate: 2,
+        deterministic: false,
+        time: '2050-01-01T12:00:00.000Z',
+        master: null,
+        port: null
+      });
     });
 
     it('should set configuration', function () {
