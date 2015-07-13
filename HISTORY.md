@@ -1,7 +1,7 @@
 # History
 
 
-## 2015-03-02, version 2.1.2
+## 2015-07-13, version 2.1.2
 
 - Fixed #1: Hypertimer crashed in case of multiple timeouts at the same time
   when running in paced mode.

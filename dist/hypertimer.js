@@ -6,8 +6,8 @@
  *
  * Run a timer at a faster or slower pace than real-time, or run discrete events.
  *
- * @version 2.1.0
- * @date    2015-03-02
+ * @version 2.1.2
+ * @date    2015-07-13
  *
  * @license
  * Copyright (C) 2014-2015 Almende B.V., http://almende.com
@@ -33,45 +33,45 @@
 		exports["hypertimer"] = factory(require("ws"), require("debug"));
 	else
 		root["hypertimer"] = factory(root["ws"], root["debug"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_13__, __WEBPACK_EXTERNAL_MODULE_14__) {
+})(this, function(__WEBPACK_EXTERNAL_MODULE_21__, __WEBPACK_EXTERNAL_MODULE_33__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
-/******/
+
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
-/******/
+
 /******/ 		// Check if module is in cache
 /******/ 		if(installedModules[moduleId])
 /******/ 			return installedModules[moduleId].exports;
-/******/
+
 /******/ 		// Create a new module (and put it into the cache)
 /******/ 		var module = installedModules[moduleId] = {
 /******/ 			exports: {},
 /******/ 			id: moduleId,
 /******/ 			loaded: false
 /******/ 		};
-/******/
+
 /******/ 		// Execute the module function
 /******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
+
 /******/ 		// Flag the module as loaded
 /******/ 		module.loaded = true;
-/******/
+
 /******/ 		// Return the exports of the module
 /******/ 		return module.exports;
 /******/ 	}
-/******/
-/******/
+
+
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = modules;
-/******/
+
 /******/ 	// expose the module cache
 /******/ 	__webpack_require__.c = installedModules;
-/******/
+
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
-/******/
+
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(0);
 /******/ })
@@ -87,11 +87,11 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-  var emitter = __webpack_require__(5);
-  var hasListeners = __webpack_require__(6);
-  var createMaster = __webpack_require__(2).createMaster;
-  var createSlave = __webpack_require__(3).createSlave;
-  var util = __webpack_require__(4);
+  var emitter = __webpack_require__(2);
+  var hasListeners = __webpack_require__(17);
+  var createMaster = __webpack_require__(19).createMaster;
+  var createSlave = __webpack_require__(34).createSlave;
+  var util = __webpack_require__(37);
 
   // enum for type of timeout
   var TYPE = {
@@ -610,7 +610,7 @@ return /******/ (function(modules) { // webpackBootstrap
     /**
      * Execute a timeout
      * @param {{id: number, type: number, time: number, callback: function}} timeout
-     * @param {function} callback
+     * @param {function} [callback]
      *             The callback is executed when the timeout's callback is
      *             finished. Called without parameters
      * @private
@@ -723,7 +723,9 @@ return /******/ (function(modules) { // webpackBootstrap
           if (paced) {
             // in paced mode, we fire all timeouts in parallel,
             // and don't await their completion (they can do async operations)
-            expired.forEach(_execTimeout);
+            expired.forEach(function (timeout) {
+              _execTimeout(timeout);
+            });
 
             // schedule the next round
             _schedule();
@@ -792,240 +794,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 2 */
 /***/ function(module, exports, __webpack_require__) {
 
-  var WebSocket = __webpack_require__(7);
-  var emitter = __webpack_require__(10);
-  var debug = __webpack_require__(9)('hypertimer:master');
-
-  exports.createMaster = function (now, config, port) {
-    var master = new WebSocket.Server({port: port});
-
-    master.on('connection', function (ws) {
-      debug('new connection');
-
-      var _emitter = emitter(ws);
-
-      // ping timesync messages (for the timesync module)
-      _emitter.on('time', function (data, callback) {
-        var time = now();
-        callback(time);
-        debug('send time ' + new Date(time).toISOString());
-      });
-
-      // send the masters config to the new connection
-      var config = sanitizedConfig();
-      debug('send config', config);
-      _emitter.send('config', config);
-
-      ws.emitter = _emitter; // used by broadcast
-    });
-
-    master.broadcast = function (event, data) {
-      debug('broadcast', event, data);
-      master.clients.forEach(function (client) {
-        client.emitter.send(event, data);
-      });
-    };
-
-    master.broadcastConfig = function () {
-      master.broadcast('config', sanitizedConfig());
-    };
-
-    master.destroy = function() {
-      master.close();
-      debug('destroyed');
-    };
-
-    function sanitizedConfig() {
-      var curr = config();
-      delete curr.time;
-      delete curr.master;
-      delete curr.port;
-      return curr;
-    }
-
-    debug('listening at ws://localhost:' + port);
-
-    return master;
-  };
-
-
-/***/ },
-/* 3 */
-/***/ function(module, exports, __webpack_require__) {
-
-  var WebSocket = __webpack_require__(7);
-  var Promise = __webpack_require__(8);
-  var debug = __webpack_require__(9)('hypertimer:slave');
-  var emitter = __webpack_require__(10);
-  var stat = __webpack_require__(11);
-  var util = __webpack_require__(12);
-
-  // TODO: make these constants configurable
-  var INTERVAL = 3600000; // once an hour
-  var DELAY = 1000;       // delay between individual requests
-  var REPEAT = 5;         // number of times to request the time for determining latency
-
-  exports.createSlave = function (url) {
-    var ws = new WebSocket(url);
-    var slave = emitter(ws);
-    var isFirst = true;
-    var isDestroyed = false;
-    var syncTimer = null;
-
-    ws.onopen = function () {
-      debug('connected');
-      sync();
-      syncTimer = setInterval(sync, INTERVAL);
-    };
-
-    slave.destroy = function () {
-      isDestroyed = true;
-
-      clearInterval(syncTimer);
-      syncTimer = null;
-
-      ws.close();
-
-      debug('destroyed');
-    };
-
-    /**
-     * Sync with the time of the master. Emits a 'change' message
-     * @private
-     */
-    function sync() {
-      // retrieve latency, then wait 1 sec
-      function getLatencyAndWait() {
-        var result = null;
-
-        if (isDestroyed) {
-          return Promise.resolve(result);
-        }
-
-        return getLatency(slave)
-            .then(function (latency) { result = latency })  // store the retrieved latency
-            .catch(function (err)    { console.log(err) })  // just log failed requests
-            .then(function () { return util.wait(DELAY) })  // wait 1 sec
-            .then(function () { return result});            // return the retrieved latency
-      }
-
-      return util
-          .repeat(getLatencyAndWait, REPEAT)
-          .then(function (all) {
-            debug('latencies', all);
-
-            // filter away failed requests
-            var latencies = all.filter(function (latency) {
-              return latency !== null;
-            });
-
-            // calculate the limit for outliers
-            var limit = stat.median(latencies) + stat.std(latencies);
-
-            // filter away outliers: all latencies largereq than the mean+std
-            var filtered = latencies.filter(function (latency) {
-              return latency < limit;
-            });
-
-            // return the mean latency
-            return (filtered.length > 0) ? stat.mean(filtered) : null;
-          })
-          .then(function (latency) {
-            if (isDestroyed) {
-              return Promise.resolve(null);
-            }
-            else {
-              return slave.request('time').then(function (timestamp) {
-                var time = timestamp + latency;
-                slave.emit('change', time);
-                return time;
-              });
-            }
-          })
-          .catch(function (err) {
-            slave.emit('error', err)
-          });
-    }
-
-    /**
-     * Request the time of the master and calculate the latency from the
-     * roundtrip time
-     * @param {{request: function}} emitter
-     * @returns {Promise.<number | null>} returns the latency
-     * @private
-     */
-    function getLatency(emitter) {
-      var start = Date.now();
-
-      return emitter.request('time')
-          .then(function (timestamp) {
-            var end = Date.now();
-            var latency = (end - start) / 2;
-            var time = timestamp + latency;
-
-            // apply the first ever retrieved offset immediately.
-            if (isFirst) {
-              isFirst = false;
-              emitter.emit('change', time);
-            }
-
-            return latency;
-          })
-    }
-
-    return slave;
-  };
-
-
-
-/***/ },
-/* 4 */
-/***/ function(module, exports, __webpack_require__) {
-
-  
-  /* istanbul ignore else */
-  if (typeof Date.now === 'function') {
-    /**
-     * Helper function to get the current time
-     * @return {number} Current time
-     */
-    exports.systemNow = function () {
-      return Date.now();
-    }
-  }
-  else {
-    /**
-     * Helper function to get the current time
-     * @return {number} Current time
-     */
-    exports.systemNow = function () {
-      return new Date().valueOf();
-    }
-  }
-
-  /**
-   * Shuffle an array
-   *
-   * + Jonas Raoni Soares Silva
-   * @ http://jsfromhell.com/array/shuffle [v1.0]
-   *
-   * @param {Array} o   Array to be shuffled
-   * @returns {Array}   Returns the shuffled array
-   */
-  exports.shuffle = function (o){
-    for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
-    return o;
-  };
-
-
-/***/ },
-/* 5 */
-/***/ function(module, exports, __webpack_require__) {
-
   'use strict';
 
-  var d        = __webpack_require__(15)
-    , callable = __webpack_require__(17)
+  var d        = __webpack_require__(3)
+    , callable = __webpack_require__(16)
 
     , apply = Function.prototype.apply, call = Function.prototype.call
     , create = Object.create, defineProperty = Object.defineProperty
@@ -1157,13 +929,270 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
+/* 3 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  var assign        = __webpack_require__(4)
+    , normalizeOpts = __webpack_require__(11)
+    , isCallable    = __webpack_require__(12)
+    , contains      = __webpack_require__(13)
+
+    , d;
+
+  d = module.exports = function (dscr, value/*, options*/) {
+  	var c, e, w, options, desc;
+  	if ((arguments.length < 2) || (typeof dscr !== 'string')) {
+  		options = value;
+  		value = dscr;
+  		dscr = null;
+  	} else {
+  		options = arguments[2];
+  	}
+  	if (dscr == null) {
+  		c = w = true;
+  		e = false;
+  	} else {
+  		c = contains.call(dscr, 'c');
+  		e = contains.call(dscr, 'e');
+  		w = contains.call(dscr, 'w');
+  	}
+
+  	desc = { value: value, configurable: c, enumerable: e, writable: w };
+  	return !options ? desc : assign(normalizeOpts(options), desc);
+  };
+
+  d.gs = function (dscr, get, set/*, options*/) {
+  	var c, e, options, desc;
+  	if (typeof dscr !== 'string') {
+  		options = set;
+  		set = get;
+  		get = dscr;
+  		dscr = null;
+  	} else {
+  		options = arguments[3];
+  	}
+  	if (get == null) {
+  		get = undefined;
+  	} else if (!isCallable(get)) {
+  		options = get;
+  		get = set = undefined;
+  	} else if (set == null) {
+  		set = undefined;
+  	} else if (!isCallable(set)) {
+  		options = set;
+  		set = undefined;
+  	}
+  	if (dscr == null) {
+  		c = true;
+  		e = false;
+  	} else {
+  		c = contains.call(dscr, 'c');
+  		e = contains.call(dscr, 'e');
+  	}
+
+  	desc = { get: get, set: set, configurable: c, enumerable: e };
+  	return !options ? desc : assign(normalizeOpts(options), desc);
+  };
+
+
+/***/ },
+/* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  module.exports = __webpack_require__(5)()
+  	? Object.assign
+  	: __webpack_require__(6);
+
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+  'use strict';
+
+  module.exports = function () {
+  	var assign = Object.assign, obj;
+  	if (typeof assign !== 'function') return false;
+  	obj = { foo: 'raz' };
+  	assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
+  	return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
+  };
+
+
+/***/ },
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
 
+  var keys  = __webpack_require__(7)
+    , value = __webpack_require__(10)
+
+    , max = Math.max;
+
+  module.exports = function (dest, src/*, …srcn*/) {
+  	var error, i, l = max(arguments.length, 2), assign;
+  	dest = Object(value(dest));
+  	assign = function (key) {
+  		try { dest[key] = src[key]; } catch (e) {
+  			if (!error) error = e;
+  		}
+  	};
+  	for (i = 1; i < l; ++i) {
+  		src = arguments[i];
+  		keys(src).forEach(assign);
+  	}
+  	if (error !== undefined) throw error;
+  	return dest;
+  };
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  module.exports = __webpack_require__(8)()
+  	? Object.keys
+  	: __webpack_require__(9);
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+  'use strict';
+
+  module.exports = function () {
+  	try {
+  		Object.keys('primitive');
+  		return true;
+  	} catch (e) { return false; }
+  };
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+  'use strict';
+
+  var keys = Object.keys;
+
+  module.exports = function (object) {
+  	return keys(object == null ? object : Object(object));
+  };
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+  'use strict';
+
+  module.exports = function (value) {
+  	if (value == null) throw new TypeError("Cannot use null or undefined");
+  	return value;
+  };
+
+
+/***/ },
+/* 11 */
+/***/ function(module, exports) {
+
+  'use strict';
+
+  var forEach = Array.prototype.forEach, create = Object.create;
+
+  var process = function (src, obj) {
+  	var key;
+  	for (key in src) obj[key] = src[key];
+  };
+
+  module.exports = function (options/*, …options*/) {
+  	var result = create(null);
+  	forEach.call(arguments, function (options) {
+  		if (options == null) return;
+  		process(Object(options), result);
+  	});
+  	return result;
+  };
+
+
+/***/ },
+/* 12 */
+/***/ function(module, exports) {
+
+  // Deprecated
+
+  'use strict';
+
+  module.exports = function (obj) { return typeof obj === 'function'; };
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  module.exports = __webpack_require__(14)()
+  	? String.prototype.contains
+  	: __webpack_require__(15);
+
+
+/***/ },
+/* 14 */
+/***/ function(module, exports) {
+
+  'use strict';
+
+  var str = 'razdwatrzy';
+
+  module.exports = function () {
+  	if (typeof str.contains !== 'function') return false;
+  	return ((str.contains('dwa') === true) && (str.contains('foo') === false));
+  };
+
+
+/***/ },
+/* 15 */
+/***/ function(module, exports) {
+
+  'use strict';
+
+  var indexOf = String.prototype.indexOf;
+
+  module.exports = function (searchString/*, position*/) {
+  	return indexOf.call(this, searchString, arguments[1]) > -1;
+  };
+
+
+/***/ },
+/* 16 */
+/***/ function(module, exports) {
+
+  'use strict';
+
+  module.exports = function (fn) {
+  	if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
+  	return fn;
+  };
+
+
+/***/ },
+/* 17 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
   var isEmpty = __webpack_require__(18)
-    , value   = __webpack_require__(19)
+    , value   = __webpack_require__(10)
 
     , hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -1179,43 +1208,109 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 7 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
-  module.exports = (typeof window === 'undefined' || typeof window.WebSocket === 'undefined') ?
-      __webpack_require__(13) :
-      window.WebSocket;
+  'use strict';
 
+  var value = __webpack_require__(10)
 
-/***/ },
-/* 8 */
-/***/ function(module, exports, __webpack_require__) {
+    , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
 
-  module.exports = (typeof window === 'undefined' || typeof window.Promise === 'undefined') ?
-      __webpack_require__(16) :
-      window.Promise;
-
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
-  var Debug = typeof window !== 'undefined' ? window.Debug : __webpack_require__(14);
-
-  module.exports = Debug || function () {
-    // empty stub when in the browser
-    return function () {};
+  module.exports = function (obj) {
+  	var i;
+  	value(obj);
+  	for (i in obj) { //jslint: ignore
+  		if (propertyIsEnumerable.call(obj, i)) return false;
+  	}
+  	return true;
   };
 
 
 /***/ },
-/* 10 */
+/* 19 */
+/***/ function(module, exports, __webpack_require__) {
+
+  var WebSocket = __webpack_require__(20);
+  var emitter = __webpack_require__(22);
+  var debug = __webpack_require__(32)('hypertimer:master');
+
+  exports.createMaster = function (now, config, port) {
+    var master = new WebSocket.Server({port: port});
+
+    master.on('connection', function (ws) {
+      debug('new connection');
+
+      var _emitter = emitter(ws);
+
+      // ping timesync messages (for the timesync module)
+      _emitter.on('time', function (data, callback) {
+        var time = now();
+        callback(time);
+        debug('send time ' + new Date(time).toISOString());
+      });
+
+      // send the masters config to the new connection
+      var config = sanitizedConfig();
+      debug('send config', config);
+      _emitter.send('config', config);
+
+      ws.emitter = _emitter; // used by broadcast
+    });
+
+    master.broadcast = function (event, data) {
+      debug('broadcast', event, data);
+      master.clients.forEach(function (client) {
+        client.emitter.send(event, data);
+      });
+    };
+
+    master.broadcastConfig = function () {
+      master.broadcast('config', sanitizedConfig());
+    };
+
+    master.destroy = function() {
+      master.close();
+      debug('destroyed');
+    };
+
+    function sanitizedConfig() {
+      var curr = config();
+      delete curr.time;
+      delete curr.master;
+      delete curr.port;
+      return curr;
+    }
+
+    debug('listening at ws://localhost:' + port);
+
+    return master;
+  };
+
+
+/***/ },
+/* 20 */
+/***/ function(module, exports, __webpack_require__) {
+
+  module.exports = (typeof window === 'undefined' || typeof window.WebSocket === 'undefined') ?
+      __webpack_require__(21) :
+      window.WebSocket;
+
+
+/***/ },
+/* 21 */
+/***/ function(module, exports) {
+
+  module.exports = __WEBPACK_EXTERNAL_MODULE_21__;
+
+/***/ },
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
   // Turn a WebSocket in an event emitter.
-  var eventEmitter = __webpack_require__(5);
-  var Promise = __webpack_require__(8);
-  var debug = __webpack_require__(9)('hypertimer:socket');
+  var eventEmitter = __webpack_require__(2);
+  var Promise = __webpack_require__(23);
+  var debug = __webpack_require__(32)('hypertimer:socket');
 
   var TIMEOUT = 60000; // ms
   // TODO: make timeout a configuration setting
@@ -1325,314 +1420,32 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 11 */
-/***/ function(module, exports, __webpack_require__) {
-
-  // basic statistical functions
-
-  exports.compare = function (a, b) {
-    return a > b ? 1 : a < b ? -1 : 0;
-  };
-
-  exports.add = function (a, b) {
-    return a + b;
-  };
-
-  exports.sum = function (arr) {
-    return arr.reduce(exports.add);
-  };
-
-  exports.mean = function (arr) {
-    return exports.sum(arr) / arr.length;
-  };
-
-  exports.std = function (arr) {
-    return Math.sqrt(exports.variance(arr));
-  };
-
-  exports.variance = function (arr) {
-    if (arr.length < 2) return 0;
-
-    var _mean = exports.mean(arr);
-    return arr
-            .map(function (x) {
-              return Math.pow(x - _mean, 2)
-            })
-            .reduce(exports.add) / (arr.length - 1);
-  };
-
-  exports.median = function (arr) {
-    if (arr.length < 2) return arr[0];
-
-    var sorted = arr.slice().sort(exports.compare);
-    if (sorted.length % 2 === 0) {
-      // even
-      return (arr[arr.length / 2 - 1] + arr[arr.length / 2]) / 2;
-    }
-    else {
-      // odd
-      return arr[(arr.length - 1) / 2];
-    }
-  };
-
-
-/***/ },
-/* 12 */
-/***/ function(module, exports, __webpack_require__) {
-
-  var Promise = __webpack_require__(8);
-
-  /**
-   * Resolve a promise after a delay
-   * @param {number} delay    A delay in milliseconds
-   * @returns {Promise} Resolves after given delay
-   */
-  exports.wait = function(delay) {
-    return new Promise(function (resolve) {
-      setTimeout(resolve, delay);
-    });
-  };
-
-  /**
-   * Repeat a given asynchronous function a number of times
-   * @param {function} fn   A function returning a promise
-   * @param {number} times
-   * @return {Promise}
-   */
-  exports.repeat = function (fn, times) {
-    return new Promise(function (resolve, reject) {
-      var count = 0;
-      var results = [];
-
-      function recurse() {
-        if (count < times) {
-          count++;
-          fn().then(function (result) {
-            results.push(result);
-            recurse();
-          })
-        }
-        else {
-          resolve(results);
-        }
-      }
-
-      recurse();
-    });
-  };
-
-  /**
-   * Repeat an asynchronous callback function whilst
-   * @param {function} condition   A function returning true or false
-   * @param {function} callback    A callback returning a Promise
-   * @returns {Promise}
-   */
-  exports.whilst = function (condition, callback) {
-    return new Promise(function (resolve, reject) {
-      function recurse() {
-        if (condition()) {
-          callback().then(function () {
-            recurse()
-          });
-        }
-        else {
-          resolve();
-        }
-      }
-
-      recurse();
-    });
-  };
-
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-  module.exports = __WEBPACK_EXTERNAL_MODULE_13__;
-
-/***/ },
-/* 14 */
-/***/ function(module, exports, __webpack_require__) {
-
-  module.exports = __WEBPACK_EXTERNAL_MODULE_14__;
-
-/***/ },
-/* 15 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var assign        = __webpack_require__(22)
-    , normalizeOpts = __webpack_require__(20)
-    , isCallable    = __webpack_require__(21)
-    , contains      = __webpack_require__(27)
-
-    , d;
-
-  d = module.exports = function (dscr, value/*, options*/) {
-  	var c, e, w, options, desc;
-  	if ((arguments.length < 2) || (typeof dscr !== 'string')) {
-  		options = value;
-  		value = dscr;
-  		dscr = null;
-  	} else {
-  		options = arguments[2];
-  	}
-  	if (dscr == null) {
-  		c = w = true;
-  		e = false;
-  	} else {
-  		c = contains.call(dscr, 'c');
-  		e = contains.call(dscr, 'e');
-  		w = contains.call(dscr, 'w');
-  	}
-
-  	desc = { value: value, configurable: c, enumerable: e, writable: w };
-  	return !options ? desc : assign(normalizeOpts(options), desc);
-  };
-
-  d.gs = function (dscr, get, set/*, options*/) {
-  	var c, e, options, desc;
-  	if (typeof dscr !== 'string') {
-  		options = set;
-  		set = get;
-  		get = dscr;
-  		dscr = null;
-  	} else {
-  		options = arguments[3];
-  	}
-  	if (get == null) {
-  		get = undefined;
-  	} else if (!isCallable(get)) {
-  		options = get;
-  		get = set = undefined;
-  	} else if (set == null) {
-  		set = undefined;
-  	} else if (!isCallable(set)) {
-  		options = set;
-  		set = undefined;
-  	}
-  	if (dscr == null) {
-  		c = true;
-  		e = false;
-  	} else {
-  		c = contains.call(dscr, 'c');
-  		e = contains.call(dscr, 'e');
-  	}
-
-  	desc = { get: get, set: set, configurable: c, enumerable: e };
-  	return !options ? desc : assign(normalizeOpts(options), desc);
-  };
-
-
-/***/ },
-/* 16 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = __webpack_require__(23)
-  __webpack_require__(24)
-  __webpack_require__(25)
-  __webpack_require__(26)
-
-/***/ },
-/* 17 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = function (fn) {
-  	if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
-  	return fn;
-  };
-
-
-/***/ },
-/* 18 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var value = __webpack_require__(19)
-
-    , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
-
-  module.exports = function (obj) {
-  	var i;
-  	value(obj);
-  	for (i in obj) { //jslint: ignore
-  		if (propertyIsEnumerable.call(obj, i)) return false;
-  	}
-  	return true;
-  };
-
-
-/***/ },
-/* 19 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = function (value) {
-  	if (value == null) throw new TypeError("Cannot use null or undefined");
-  	return value;
-  };
-
-
-/***/ },
-/* 20 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var forEach = Array.prototype.forEach, create = Object.create;
-
-  var process = function (src, obj) {
-  	var key;
-  	for (key in src) obj[key] = src[key];
-  };
-
-  module.exports = function (options/*, …options*/) {
-  	var result = create(null);
-  	forEach.call(arguments, function (options) {
-  		if (options == null) return;
-  		process(Object(options), result);
-  	});
-  	return result;
-  };
-
-
-/***/ },
-/* 21 */
-/***/ function(module, exports, __webpack_require__) {
-
-  // Deprecated
-
-  'use strict';
-
-  module.exports = function (obj) { return typeof obj === 'function'; };
-
-
-/***/ },
-/* 22 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = __webpack_require__(28)()
-  	? Object.assign
-  	: __webpack_require__(29);
-
-
-/***/ },
 /* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
+  module.exports = (typeof window === 'undefined' || typeof window.Promise === 'undefined') ?
+      __webpack_require__(24) :
+      window.Promise;
+
+
+/***/ },
+/* 24 */
+/***/ function(module, exports, __webpack_require__) {
+
   'use strict';
 
-  var asap = __webpack_require__(32)
+  module.exports = __webpack_require__(25)
+  __webpack_require__(29)
+  __webpack_require__(30)
+  __webpack_require__(31)
+
+/***/ },
+/* 25 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  var asap = __webpack_require__(26)
 
   module.exports = Promise;
   function Promise(fn) {
@@ -1738,290 +1551,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 24 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var Promise = __webpack_require__(23)
-  var asap = __webpack_require__(32)
-
-  module.exports = Promise
-  Promise.prototype.done = function (onFulfilled, onRejected) {
-    var self = arguments.length ? this.then.apply(this, arguments) : this
-    self.then(null, function (err) {
-      asap(function () {
-        throw err
-      })
-    })
-  }
-
-/***/ },
-/* 25 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  //This file contains the ES6 extensions to the core Promises/A+ API
-
-  var Promise = __webpack_require__(23)
-  var asap = __webpack_require__(32)
-
-  module.exports = Promise
-
-  /* Static Functions */
-
-  function ValuePromise(value) {
-    this.then = function (onFulfilled) {
-      if (typeof onFulfilled !== 'function') return this
-      return new Promise(function (resolve, reject) {
-        asap(function () {
-          try {
-            resolve(onFulfilled(value))
-          } catch (ex) {
-            reject(ex);
-          }
-        })
-      })
-    }
-  }
-  ValuePromise.prototype = Promise.prototype
-
-  var TRUE = new ValuePromise(true)
-  var FALSE = new ValuePromise(false)
-  var NULL = new ValuePromise(null)
-  var UNDEFINED = new ValuePromise(undefined)
-  var ZERO = new ValuePromise(0)
-  var EMPTYSTRING = new ValuePromise('')
-
-  Promise.resolve = function (value) {
-    if (value instanceof Promise) return value
-
-    if (value === null) return NULL
-    if (value === undefined) return UNDEFINED
-    if (value === true) return TRUE
-    if (value === false) return FALSE
-    if (value === 0) return ZERO
-    if (value === '') return EMPTYSTRING
-
-    if (typeof value === 'object' || typeof value === 'function') {
-      try {
-        var then = value.then
-        if (typeof then === 'function') {
-          return new Promise(then.bind(value))
-        }
-      } catch (ex) {
-        return new Promise(function (resolve, reject) {
-          reject(ex)
-        })
-      }
-    }
-
-    return new ValuePromise(value)
-  }
-
-  Promise.all = function (arr) {
-    var args = Array.prototype.slice.call(arr)
-
-    return new Promise(function (resolve, reject) {
-      if (args.length === 0) return resolve([])
-      var remaining = args.length
-      function res(i, val) {
-        try {
-          if (val && (typeof val === 'object' || typeof val === 'function')) {
-            var then = val.then
-            if (typeof then === 'function') {
-              then.call(val, function (val) { res(i, val) }, reject)
-              return
-            }
-          }
-          args[i] = val
-          if (--remaining === 0) {
-            resolve(args);
-          }
-        } catch (ex) {
-          reject(ex)
-        }
-      }
-      for (var i = 0; i < args.length; i++) {
-        res(i, args[i])
-      }
-    })
-  }
-
-  Promise.reject = function (value) {
-    return new Promise(function (resolve, reject) { 
-      reject(value);
-    });
-  }
-
-  Promise.race = function (values) {
-    return new Promise(function (resolve, reject) { 
-      values.forEach(function(value){
-        Promise.resolve(value).then(resolve, reject);
-      })
-    });
-  }
-
-  /* Prototype Methods */
-
-  Promise.prototype['catch'] = function (onRejected) {
-    return this.then(null, onRejected);
-  }
-
-
-/***/ },
 /* 26 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  //This file contains then/promise specific extensions that are only useful for node.js interop
-
-  var Promise = __webpack_require__(23)
-  var asap = __webpack_require__(32)
-
-  module.exports = Promise
-
-  /* Static Functions */
-
-  Promise.denodeify = function (fn, argumentCount) {
-    argumentCount = argumentCount || Infinity
-    return function () {
-      var self = this
-      var args = Array.prototype.slice.call(arguments)
-      return new Promise(function (resolve, reject) {
-        while (args.length && args.length > argumentCount) {
-          args.pop()
-        }
-        args.push(function (err, res) {
-          if (err) reject(err)
-          else resolve(res)
-        })
-        var res = fn.apply(self, args)
-        if (res && (typeof res === 'object' || typeof res === 'function') && typeof res.then === 'function') {
-          resolve(res)
-        }
-      })
-    }
-  }
-  Promise.nodeify = function (fn) {
-    return function () {
-      var args = Array.prototype.slice.call(arguments)
-      var callback = typeof args[args.length - 1] === 'function' ? args.pop() : null
-      var ctx = this
-      try {
-        return fn.apply(this, arguments).nodeify(callback, ctx)
-      } catch (ex) {
-        if (callback === null || typeof callback == 'undefined') {
-          return new Promise(function (resolve, reject) { reject(ex) })
-        } else {
-          asap(function () {
-            callback.call(ctx, ex)
-          })
-        }
-      }
-    }
-  }
-
-  Promise.prototype.nodeify = function (callback, ctx) {
-    if (typeof callback != 'function') return this
-
-    this.then(function (value) {
-      asap(function () {
-        callback.call(ctx, null, value)
-      })
-    }, function (err) {
-      asap(function () {
-        callback.call(ctx, err)
-      })
-    })
-  }
-
-
-/***/ },
-/* 27 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = __webpack_require__(30)()
-  	? String.prototype.contains
-  	: __webpack_require__(31);
-
-
-/***/ },
-/* 28 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = function () {
-  	var assign = Object.assign, obj;
-  	if (typeof assign !== 'function') return false;
-  	obj = { foo: 'raz' };
-  	assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
-  	return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
-  };
-
-
-/***/ },
-/* 29 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var keys  = __webpack_require__(33)
-    , value = __webpack_require__(19)
-
-    , max = Math.max;
-
-  module.exports = function (dest, src/*, …srcn*/) {
-  	var error, i, l = max(arguments.length, 2), assign;
-  	dest = Object(value(dest));
-  	assign = function (key) {
-  		try { dest[key] = src[key]; } catch (e) {
-  			if (!error) error = e;
-  		}
-  	};
-  	for (i = 1; i < l; ++i) {
-  		src = arguments[i];
-  		keys(src).forEach(assign);
-  	}
-  	if (error !== undefined) throw error;
-  	return dest;
-  };
-
-
-/***/ },
-/* 30 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var str = 'razdwatrzy';
-
-  module.exports = function () {
-  	if (typeof str.contains !== 'function') return false;
-  	return ((str.contains('dwa') === true) && (str.contains('foo') === false));
-  };
-
-
-/***/ },
-/* 31 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var indexOf = String.prototype.indexOf;
-
-  module.exports = function (searchString/*, position*/) {
-  	return indexOf.call(this, searchString, arguments[1]) > -1;
-  };
-
-
-/***/ },
-/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
   /* WEBPACK VAR INJECTION */(function(process, setImmediate) {
@@ -2137,117 +1667,82 @@ return /******/ (function(modules) { // webpackBootstrap
 
   module.exports = asap;
 
-  
-  /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(36), __webpack_require__(37).setImmediate))
+
+  /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(27), __webpack_require__(28).setImmediate))
 
 /***/ },
-/* 33 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = __webpack_require__(34)()
-  	? Object.keys
-  	: __webpack_require__(35);
-
-
-/***/ },
-/* 34 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = function () {
-  	try {
-  		Object.keys('primitive');
-  		return true;
-  	} catch (e) { return false; }
-  };
-
-
-/***/ },
-/* 35 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  var keys = Object.keys;
-
-  module.exports = function (object) {
-  	return keys(object == null ? object : Object(object));
-  };
-
-
-/***/ },
-/* 36 */
-/***/ function(module, exports, __webpack_require__) {
+/* 27 */
+/***/ function(module, exports) {
 
   // shim for using process in browser
 
   var process = module.exports = {};
+  var queue = [];
+  var draining = false;
+  var currentQueue;
+  var queueIndex = -1;
 
-  process.nextTick = (function () {
-      var canSetImmediate = typeof window !== 'undefined'
-      && window.setImmediate;
-      var canMutationObserver = typeof window !== 'undefined'
-      && window.MutationObserver;
-      var canPost = typeof window !== 'undefined'
-      && window.postMessage && window.addEventListener
-      ;
-
-      if (canSetImmediate) {
-          return function (f) { return window.setImmediate(f) };
+  function cleanUpNextTick() {
+      draining = false;
+      if (currentQueue.length) {
+          queue = currentQueue.concat(queue);
+      } else {
+          queueIndex = -1;
       }
-
-      var queue = [];
-
-      if (canMutationObserver) {
-          var hiddenDiv = document.createElement("div");
-          var observer = new MutationObserver(function () {
-              var queueList = queue.slice();
-              queue.length = 0;
-              queueList.forEach(function (fn) {
-                  fn();
-              });
-          });
-
-          observer.observe(hiddenDiv, { attributes: true });
-
-          return function nextTick(fn) {
-              if (!queue.length) {
-                  hiddenDiv.setAttribute('yes', 'no');
-              }
-              queue.push(fn);
-          };
+      if (queue.length) {
+          drainQueue();
       }
+  }
 
-      if (canPost) {
-          window.addEventListener('message', function (ev) {
-              var source = ev.source;
-              if ((source === window || source === null) && ev.data === 'process-tick') {
-                  ev.stopPropagation();
-                  if (queue.length > 0) {
-                      var fn = queue.shift();
-                      fn();
-                  }
-              }
-          }, true);
-
-          return function nextTick(fn) {
-              queue.push(fn);
-              window.postMessage('process-tick', '*');
-          };
+  function drainQueue() {
+      if (draining) {
+          return;
       }
+      var timeout = setTimeout(cleanUpNextTick);
+      draining = true;
 
-      return function nextTick(fn) {
-          setTimeout(fn, 0);
-      };
-  })();
+      var len = queue.length;
+      while(len) {
+          currentQueue = queue;
+          queue = [];
+          while (++queueIndex < len) {
+              currentQueue[queueIndex].run();
+          }
+          queueIndex = -1;
+          len = queue.length;
+      }
+      currentQueue = null;
+      draining = false;
+      clearTimeout(timeout);
+  }
 
+  process.nextTick = function (fun) {
+      var args = new Array(arguments.length - 1);
+      if (arguments.length > 1) {
+          for (var i = 1; i < arguments.length; i++) {
+              args[i - 1] = arguments[i];
+          }
+      }
+      queue.push(new Item(fun, args));
+      if (queue.length === 1 && !draining) {
+          setTimeout(drainQueue, 0);
+      }
+  };
+
+  // v8 likes predictible objects
+  function Item(fun, array) {
+      this.fun = fun;
+      this.array = array;
+  }
+  Item.prototype.run = function () {
+      this.fun.apply(null, this.array);
+  };
   process.title = 'browser';
   process.browser = true;
   process.env = {};
   process.argv = [];
+  process.version = ''; // empty string to avoid regexp issues
+  process.versions = {};
 
   function noop() {}
 
@@ -2268,37 +1763,60 @@ return /******/ (function(modules) { // webpackBootstrap
   process.chdir = function (dir) {
       throw new Error('process.chdir is not supported');
   };
+  process.umask = function() { return 0; };
 
 
 /***/ },
-/* 37 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
-  /* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(38).nextTick;
+  /* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(27).nextTick;
+  var apply = Function.prototype.apply;
   var slice = Array.prototype.slice;
   var immediateIds = {};
   var nextImmediateId = 0;
 
   // DOM APIs, for completeness
 
-  if (typeof setTimeout !== 'undefined') exports.setTimeout = function() { return setTimeout.apply(window, arguments); };
-  if (typeof clearTimeout !== 'undefined') exports.clearTimeout = function() { clearTimeout.apply(window, arguments); };
-  if (typeof setInterval !== 'undefined') exports.setInterval = function() { return setInterval.apply(window, arguments); };
-  if (typeof clearInterval !== 'undefined') exports.clearInterval = function() { clearInterval.apply(window, arguments); };
+  exports.setTimeout = function() {
+    return new Timeout(apply.call(setTimeout, window, arguments), clearTimeout);
+  };
+  exports.setInterval = function() {
+    return new Timeout(apply.call(setInterval, window, arguments), clearInterval);
+  };
+  exports.clearTimeout =
+  exports.clearInterval = function(timeout) { timeout.close(); };
 
-  // TODO: Change to more efficient list approach used in Node.js
-  // For now, we just implement the APIs using the primitives above.
+  function Timeout(id, clearFn) {
+    this._id = id;
+    this._clearFn = clearFn;
+  }
+  Timeout.prototype.unref = Timeout.prototype.ref = function() {};
+  Timeout.prototype.close = function() {
+    this._clearFn.call(window, this._id);
+  };
 
-  exports.enroll = function(item, delay) {
-    item._timeoutID = setTimeout(item._onTimeout, delay);
+  // Does not start the time, just sets up the members needed.
+  exports.enroll = function(item, msecs) {
+    clearTimeout(item._idleTimeoutId);
+    item._idleTimeout = msecs;
   };
 
   exports.unenroll = function(item) {
-    clearTimeout(item._timeoutID);
+    clearTimeout(item._idleTimeoutId);
+    item._idleTimeout = -1;
   };
 
-  exports.active = function(item) {
-    // our naive impl doesn't care (correctness is still preserved)
+  exports._unrefActive = exports.active = function(item) {
+    clearTimeout(item._idleTimeoutId);
+
+    var msecs = item._idleTimeout;
+    if (msecs >= 0) {
+      item._idleTimeoutId = setTimeout(function onTimeout() {
+        if (item._onTimeout)
+          item._onTimeout();
+      }, msecs);
+    }
   };
 
   // That's not how node.js implements it but the exposed api is the same.
@@ -2328,71 +1846,519 @@ return /******/ (function(modules) { // webpackBootstrap
   exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
     delete immediateIds[id];
   };
-  /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(37).setImmediate, __webpack_require__(37).clearImmediate))
+  /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(28).setImmediate, __webpack_require__(28).clearImmediate))
 
 /***/ },
-/* 38 */
+/* 29 */
 /***/ function(module, exports, __webpack_require__) {
 
-  // shim for using process in browser
+  'use strict';
 
-  var process = module.exports = {};
-  var queue = [];
-  var draining = false;
+  var Promise = __webpack_require__(25)
+  var asap = __webpack_require__(26)
 
-  function drainQueue() {
-      if (draining) {
-          return;
-      }
-      draining = true;
-      var currentQueue;
-      var len = queue.length;
-      while(len) {
-          currentQueue = queue;
-          queue = [];
-          var i = -1;
-          while (++i < len) {
-              currentQueue[i]();
-          }
-          len = queue.length;
-      }
-      draining = false;
+  module.exports = Promise
+  Promise.prototype.done = function (onFulfilled, onRejected) {
+    var self = arguments.length ? this.then.apply(this, arguments) : this
+    self.then(null, function (err) {
+      asap(function () {
+        throw err
+      })
+    })
   }
-  process.nextTick = function (fun) {
-      queue.push(fun);
-      if (!draining) {
-          setTimeout(drainQueue, 0);
+
+/***/ },
+/* 30 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  //This file contains the ES6 extensions to the core Promises/A+ API
+
+  var Promise = __webpack_require__(25)
+  var asap = __webpack_require__(26)
+
+  module.exports = Promise
+
+  /* Static Functions */
+
+  function ValuePromise(value) {
+    this.then = function (onFulfilled) {
+      if (typeof onFulfilled !== 'function') return this
+      return new Promise(function (resolve, reject) {
+        asap(function () {
+          try {
+            resolve(onFulfilled(value))
+          } catch (ex) {
+            reject(ex);
+          }
+        })
+      })
+    }
+  }
+  ValuePromise.prototype = Promise.prototype
+
+  var TRUE = new ValuePromise(true)
+  var FALSE = new ValuePromise(false)
+  var NULL = new ValuePromise(null)
+  var UNDEFINED = new ValuePromise(undefined)
+  var ZERO = new ValuePromise(0)
+  var EMPTYSTRING = new ValuePromise('')
+
+  Promise.resolve = function (value) {
+    if (value instanceof Promise) return value
+
+    if (value === null) return NULL
+    if (value === undefined) return UNDEFINED
+    if (value === true) return TRUE
+    if (value === false) return FALSE
+    if (value === 0) return ZERO
+    if (value === '') return EMPTYSTRING
+
+    if (typeof value === 'object' || typeof value === 'function') {
+      try {
+        var then = value.then
+        if (typeof then === 'function') {
+          return new Promise(then.bind(value))
+        }
+      } catch (ex) {
+        return new Promise(function (resolve, reject) {
+          reject(ex)
+        })
       }
+    }
+
+    return new ValuePromise(value)
+  }
+
+  Promise.all = function (arr) {
+    var args = Array.prototype.slice.call(arr)
+
+    return new Promise(function (resolve, reject) {
+      if (args.length === 0) return resolve([])
+      var remaining = args.length
+      function res(i, val) {
+        try {
+          if (val && (typeof val === 'object' || typeof val === 'function')) {
+            var then = val.then
+            if (typeof then === 'function') {
+              then.call(val, function (val) { res(i, val) }, reject)
+              return
+            }
+          }
+          args[i] = val
+          if (--remaining === 0) {
+            resolve(args);
+          }
+        } catch (ex) {
+          reject(ex)
+        }
+      }
+      for (var i = 0; i < args.length; i++) {
+        res(i, args[i])
+      }
+    })
+  }
+
+  Promise.reject = function (value) {
+    return new Promise(function (resolve, reject) { 
+      reject(value);
+    });
+  }
+
+  Promise.race = function (values) {
+    return new Promise(function (resolve, reject) { 
+      values.forEach(function(value){
+        Promise.resolve(value).then(resolve, reject);
+      })
+    });
+  }
+
+  /* Prototype Methods */
+
+  Promise.prototype['catch'] = function (onRejected) {
+    return this.then(null, onRejected);
+  }
+
+
+/***/ },
+/* 31 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  //This file contains then/promise specific extensions that are only useful for node.js interop
+
+  var Promise = __webpack_require__(25)
+  var asap = __webpack_require__(26)
+
+  module.exports = Promise
+
+  /* Static Functions */
+
+  Promise.denodeify = function (fn, argumentCount) {
+    argumentCount = argumentCount || Infinity
+    return function () {
+      var self = this
+      var args = Array.prototype.slice.call(arguments)
+      return new Promise(function (resolve, reject) {
+        while (args.length && args.length > argumentCount) {
+          args.pop()
+        }
+        args.push(function (err, res) {
+          if (err) reject(err)
+          else resolve(res)
+        })
+        var res = fn.apply(self, args)
+        if (res && (typeof res === 'object' || typeof res === 'function') && typeof res.then === 'function') {
+          resolve(res)
+        }
+      })
+    }
+  }
+  Promise.nodeify = function (fn) {
+    return function () {
+      var args = Array.prototype.slice.call(arguments)
+      var callback = typeof args[args.length - 1] === 'function' ? args.pop() : null
+      var ctx = this
+      try {
+        return fn.apply(this, arguments).nodeify(callback, ctx)
+      } catch (ex) {
+        if (callback === null || typeof callback == 'undefined') {
+          return new Promise(function (resolve, reject) { reject(ex) })
+        } else {
+          asap(function () {
+            callback.call(ctx, ex)
+          })
+        }
+      }
+    }
+  }
+
+  Promise.prototype.nodeify = function (callback, ctx) {
+    if (typeof callback != 'function') return this
+
+    this.then(function (value) {
+      asap(function () {
+        callback.call(ctx, null, value)
+      })
+    }, function (err) {
+      asap(function () {
+        callback.call(ctx, err)
+      })
+    })
+  }
+
+
+/***/ },
+/* 32 */
+/***/ function(module, exports, __webpack_require__) {
+
+  var Debug = typeof window !== 'undefined' ? window.Debug : __webpack_require__(33);
+
+  module.exports = Debug || function () {
+    // empty stub when in the browser
+    return function () {};
   };
 
-  process.title = 'browser';
-  process.browser = true;
-  process.env = {};
-  process.argv = [];
-  process.version = ''; // empty string to avoid regexp issues
 
-  function noop() {}
+/***/ },
+/* 33 */
+/***/ function(module, exports) {
 
-  process.on = noop;
-  process.addListener = noop;
-  process.once = noop;
-  process.off = noop;
-  process.removeListener = noop;
-  process.removeAllListeners = noop;
-  process.emit = noop;
+  module.exports = __WEBPACK_EXTERNAL_MODULE_33__;
 
-  process.binding = function (name) {
-      throw new Error('process.binding is not supported');
+/***/ },
+/* 34 */
+/***/ function(module, exports, __webpack_require__) {
+
+  var WebSocket = __webpack_require__(20);
+  var Promise = __webpack_require__(23);
+  var debug = __webpack_require__(32)('hypertimer:slave');
+  var emitter = __webpack_require__(22);
+  var stat = __webpack_require__(35);
+  var util = __webpack_require__(36);
+
+  // TODO: make these constants configurable
+  var INTERVAL = 3600000; // once an hour
+  var DELAY = 1000;       // delay between individual requests
+  var REPEAT = 5;         // number of times to request the time for determining latency
+
+  exports.createSlave = function (url) {
+    var ws = new WebSocket(url);
+    var slave = emitter(ws);
+    var isFirst = true;
+    var isDestroyed = false;
+    var syncTimer = null;
+
+    ws.onopen = function () {
+      debug('connected');
+      sync();
+      syncTimer = setInterval(sync, INTERVAL);
+    };
+
+    slave.destroy = function () {
+      isDestroyed = true;
+
+      clearInterval(syncTimer);
+      syncTimer = null;
+
+      ws.close();
+
+      debug('destroyed');
+    };
+
+    /**
+     * Sync with the time of the master. Emits a 'change' message
+     * @private
+     */
+    function sync() {
+      // retrieve latency, then wait 1 sec
+      function getLatencyAndWait() {
+        var result = null;
+
+        if (isDestroyed) {
+          return Promise.resolve(result);
+        }
+
+        return getLatency(slave)
+            .then(function (latency) { result = latency })  // store the retrieved latency
+            .catch(function (err)    { console.log(err) })  // just log failed requests
+            .then(function () { return util.wait(DELAY) })  // wait 1 sec
+            .then(function () { return result});            // return the retrieved latency
+      }
+
+      return util
+          .repeat(getLatencyAndWait, REPEAT)
+          .then(function (all) {
+            debug('latencies', all);
+
+            // filter away failed requests
+            var latencies = all.filter(function (latency) {
+              return latency !== null;
+            });
+
+            // calculate the limit for outliers
+            var limit = stat.median(latencies) + stat.std(latencies);
+
+            // filter away outliers: all latencies largereq than the mean+std
+            var filtered = latencies.filter(function (latency) {
+              return latency < limit;
+            });
+
+            // return the mean latency
+            return (filtered.length > 0) ? stat.mean(filtered) : null;
+          })
+          .then(function (latency) {
+            if (isDestroyed) {
+              return Promise.resolve(null);
+            }
+            else {
+              return slave.request('time').then(function (timestamp) {
+                var time = timestamp + latency;
+                slave.emit('change', time);
+                return time;
+              });
+            }
+          })
+          .catch(function (err) {
+            slave.emit('error', err)
+          });
+    }
+
+    /**
+     * Request the time of the master and calculate the latency from the
+     * roundtrip time
+     * @param {{request: function}} emitter
+     * @returns {Promise.<number | null>} returns the latency
+     * @private
+     */
+    function getLatency(emitter) {
+      var start = Date.now();
+
+      return emitter.request('time')
+          .then(function (timestamp) {
+            var end = Date.now();
+            var latency = (end - start) / 2;
+            var time = timestamp + latency;
+
+            // apply the first ever retrieved offset immediately.
+            if (isFirst) {
+              isFirst = false;
+              emitter.emit('change', time);
+            }
+
+            return latency;
+          })
+    }
+
+    return slave;
   };
 
-  // TODO(shtylman)
-  process.cwd = function () { return '/' };
-  process.chdir = function (dir) {
-      throw new Error('process.chdir is not supported');
+
+
+/***/ },
+/* 35 */
+/***/ function(module, exports) {
+
+  // basic statistical functions
+
+  exports.compare = function (a, b) {
+    return a > b ? 1 : a < b ? -1 : 0;
   };
-  process.umask = function() { return 0; };
+
+  exports.add = function (a, b) {
+    return a + b;
+  };
+
+  exports.sum = function (arr) {
+    return arr.reduce(exports.add);
+  };
+
+  exports.mean = function (arr) {
+    return exports.sum(arr) / arr.length;
+  };
+
+  exports.std = function (arr) {
+    return Math.sqrt(exports.variance(arr));
+  };
+
+  exports.variance = function (arr) {
+    if (arr.length < 2) return 0;
+
+    var _mean = exports.mean(arr);
+    return arr
+            .map(function (x) {
+              return Math.pow(x - _mean, 2)
+            })
+            .reduce(exports.add) / (arr.length - 1);
+  };
+
+  exports.median = function (arr) {
+    if (arr.length < 2) return arr[0];
+
+    var sorted = arr.slice().sort(exports.compare);
+    if (sorted.length % 2 === 0) {
+      // even
+      return (arr[arr.length / 2 - 1] + arr[arr.length / 2]) / 2;
+    }
+    else {
+      // odd
+      return arr[(arr.length - 1) / 2];
+    }
+  };
+
+
+/***/ },
+/* 36 */
+/***/ function(module, exports, __webpack_require__) {
+
+  var Promise = __webpack_require__(23);
+
+  /**
+   * Resolve a promise after a delay
+   * @param {number} delay    A delay in milliseconds
+   * @returns {Promise} Resolves after given delay
+   */
+  exports.wait = function(delay) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, delay);
+    });
+  };
+
+  /**
+   * Repeat a given asynchronous function a number of times
+   * @param {function} fn   A function returning a promise
+   * @param {number} times
+   * @return {Promise}
+   */
+  exports.repeat = function (fn, times) {
+    return new Promise(function (resolve, reject) {
+      var count = 0;
+      var results = [];
+
+      function recurse() {
+        if (count < times) {
+          count++;
+          fn().then(function (result) {
+            results.push(result);
+            recurse();
+          })
+        }
+        else {
+          resolve(results);
+        }
+      }
+
+      recurse();
+    });
+  };
+
+  /**
+   * Repeat an asynchronous callback function whilst
+   * @param {function} condition   A function returning true or false
+   * @param {function} callback    A callback returning a Promise
+   * @returns {Promise}
+   */
+  exports.whilst = function (condition, callback) {
+    return new Promise(function (resolve, reject) {
+      function recurse() {
+        if (condition()) {
+          callback().then(function () {
+            recurse()
+          });
+        }
+        else {
+          resolve();
+        }
+      }
+
+      recurse();
+    });
+  };
+
+
+/***/ },
+/* 37 */
+/***/ function(module, exports) {
+
+  
+  /* istanbul ignore else */
+  if (typeof Date.now === 'function') {
+    /**
+     * Helper function to get the current time
+     * @return {number} Current time
+     */
+    exports.systemNow = function () {
+      return Date.now();
+    }
+  }
+  else {
+    /**
+     * Helper function to get the current time
+     * @return {number} Current time
+     */
+    exports.systemNow = function () {
+      return new Date().valueOf();
+    }
+  }
+
+  /**
+   * Shuffle an array
+   *
+   * + Jonas Raoni Soares Silva
+   * @ http://jsfromhell.com/array/shuffle [v1.0]
+   *
+   * @param {Array} o   Array to be shuffled
+   * @returns {Array}   Returns the shuffled array
+   */
+  exports.shuffle = function (o){
+    for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+  };
 
 
 /***/ }
 /******/ ])
 });
+;
