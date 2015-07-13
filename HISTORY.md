@@ -1,6 +1,12 @@
 # History
 
 
+## 2015-03-02, version 2.1.2
+
+- Fixed #1: Hypertimer crashed in case of multiple timeouts at the same time
+  when running in paced mode.
+
+
 ## 2015-03-02, version 2.1.1
 
 - Fixed replies not being send via socket.

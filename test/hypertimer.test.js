@@ -437,6 +437,26 @@ describe('hypertimer', function () {
       }, 100);
     });
 
+    it('should create two timeouts at the same time', function (done) {
+      var timer = hypertimer();
+      var logs = [];
+
+      function finish () {
+        if (logs.length === 2) {
+          assert.deepEqual(logs, ['a', 'b']);
+          done();
+        }
+      }
+
+      timer.setTimeout(function () {
+        logs.push('a');
+        finish();
+      }, 25);
+      timer.setTimeout(function () {
+        logs.push('b');
+        finish();
+      }, 25);
+    });
   });
 
   describe('trigger', function () {
@@ -682,6 +702,30 @@ describe('hypertimer', function () {
         done();
       }, 250)
     });
+
+
+    it('should create two triggers at the same time', function (done) {
+      var timer = hypertimer();
+      var logs = [];
+      var time = new Date().valueOf() + 25;
+
+      function finish () {
+        if (logs.length === 2) {
+          assert.deepEqual(logs, ['a', 'b']);
+          done();
+        }
+      }
+
+      timer.setTrigger(function () {
+        logs.push('a');
+        finish();
+      }, time);
+      timer.setTrigger(function () {
+        logs.push('b');
+        finish();
+      }, time);
+    });
+
   });
 
   describe('interval', function () {
@@ -1010,6 +1054,30 @@ describe('hypertimer', function () {
         }
       }, 100);
     });
+
+    it('should create two intervals at the same time', function (done) {
+      var timer = hypertimer();
+      var logs = [];
+      var time = new Date().valueOf() + 25;
+
+      function finish () {
+        if (logs.length === 2) {
+          assert.deepEqual(logs, ['a', 'b']);
+          timer.clear();
+          done();
+        }
+      }
+
+      timer.setInterval(function () {
+        logs.push('a');
+        finish();
+      }, time);
+      timer.setInterval(function () {
+        logs.push('b');
+        finish();
+      }, time);
+    });
+
   });
 
   describe('discrete events', function () {
