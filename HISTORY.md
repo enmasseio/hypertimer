@@ -1,6 +1,11 @@
 # History
 
 
+## 2015-12-08, version 2.1.3
+
+- Upgraded dependencies to the latest versions.
+
+
 ## 2015-07-13, version 2.1.2
 
 - Fixed #1: Hypertimer crashed in case of multiple timeouts at the same time
