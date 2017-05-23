@@ -19,8 +19,8 @@
     "url": "git://github.com/enmasseio/hypertimer.git"
   },
   "dependencies": {
-    "body-parser": "1.14.1",
-    "debug": "2.2.0",
+    "body-parser": "1.17.2",
+    "debug": "2.6.7",
     "event-emitter": "0.3.4",
     "node-uuid": "1.4.7",
     "promise": "7.0.4",
