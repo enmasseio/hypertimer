@@ -6,8 +6,8 @@
  *
  * Run a timer at a faster or slower pace than real-time, or run discrete events.
  *
- * @version 2.1.3
- * @date    2015-12-08
+ * @version 3.0.0
+ * @date    2018-01-24
  *
  * @license
  * Copyright (C) 2014-2015 Almende B.V., http://almende.com
@@ -33,7 +33,7 @@
 		exports["hypertimer"] = factory(require("ws"), require("debug"));
 	else
 		root["hypertimer"] = factory(root["ws"], root["debug"]);
-})(this, function(__WEBPACK_EXTERNAL_MODULE_21__, __WEBPACK_EXTERNAL_MODULE_34__) {
+})(this, function(__WEBPACK_EXTERNAL_MODULE_23__, __WEBPACK_EXTERNAL_MODULE_37__) {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -88,10 +88,10 @@ return /******/ (function(modules) { // webpackBootstrap
 /***/ function(module, exports, __webpack_require__) {
 
   var emitter = __webpack_require__(2);
-  var hasListeners = __webpack_require__(17);
-  var createMaster = __webpack_require__(19).createMaster;
-  var createSlave = __webpack_require__(35).createSlave;
-  var util = __webpack_require__(38);
+  var hasListeners = __webpack_require__(19);
+  var createMaster = __webpack_require__(21).createMaster;
+  var createSlave = __webpack_require__(38).createSlave;
+  var util = __webpack_require__(41);
 
   // enum for type of timeout
   var TYPE = {
@@ -797,7 +797,7 @@ return /******/ (function(modules) { // webpackBootstrap
   'use strict';
 
   var d        = __webpack_require__(3)
-    , callable = __webpack_require__(16)
+    , callable = __webpack_require__(18)
 
     , apply = Function.prototype.apply, call = Function.prototype.call
     , create = Object.create, defineProperty = Object.defineProperty
@@ -935,9 +935,9 @@ return /******/ (function(modules) { // webpackBootstrap
   'use strict';
 
   var assign        = __webpack_require__(4)
-    , normalizeOpts = __webpack_require__(11)
-    , isCallable    = __webpack_require__(12)
-    , contains      = __webpack_require__(13)
+    , normalizeOpts = __webpack_require__(13)
+    , isCallable    = __webpack_require__(14)
+    , contains      = __webpack_require__(15)
 
     , d;
 
@@ -1001,7 +1001,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 4 */
 /***/ function(module, exports, __webpack_require__) {
 
-  'use strict';
+  "use strict";
 
   module.exports = __webpack_require__(5)()
   	? Object.assign
@@ -1012,14 +1012,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 5 */
 /***/ function(module, exports) {
 
-  'use strict';
+  "use strict";
 
   module.exports = function () {
   	var assign = Object.assign, obj;
-  	if (typeof assign !== 'function') return false;
-  	obj = { foo: 'raz' };
-  	assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
-  	return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
+  	if (typeof assign !== "function") return false;
+  	obj = { foo: "raz" };
+  	assign(obj, { bar: "dwa" }, { trzy: "trzy" });
+  	return (obj.foo + obj.bar + obj.trzy) === "razdwatrzy";
   };
 
 
@@ -1027,22 +1027,23 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-  'use strict';
+  "use strict";
 
   var keys  = __webpack_require__(7)
-    , value = __webpack_require__(10)
+    , value = __webpack_require__(12)
+    , max   = Math.max;
 
-    , max = Math.max;
-
-  module.exports = function (dest, src/*, …srcn*/) {
-  	var error, i, l = max(arguments.length, 2), assign;
+  module.exports = function (dest, src /*, …srcn*/) {
+  	var error, i, length = max(arguments.length, 2), assign;
   	dest = Object(value(dest));
   	assign = function (key) {
-  		try { dest[key] = src[key]; } catch (e) {
+  		try {
+  			dest[key] = src[key];
+  		} catch (e) {
   			if (!error) error = e;
   		}
   	};
-  	for (i = 1; i < l; ++i) {
+  	for (i = 1; i < length; ++i) {
   		src = arguments[i];
   		keys(src).forEach(assign);
   	}
@@ -1055,7 +1056,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-  'use strict';
+  "use strict";
 
   module.exports = __webpack_require__(8)()
   	? Object.keys
@@ -1066,38 +1067,43 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 8 */
 /***/ function(module, exports) {
 
-  'use strict';
+  "use strict";
 
   module.exports = function () {
   	try {
-  		Object.keys('primitive');
+  		Object.keys("primitive");
   		return true;
-  	} catch (e) { return false; }
+  	} catch (e) {
+   return false;
+  }
   };
 
 
 /***/ },
 /* 9 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-  'use strict';
+  "use strict";
+
+  var isValue = __webpack_require__(10);
 
   var keys = Object.keys;
 
   module.exports = function (object) {
-  	return keys(object == null ? object : Object(object));
+  	return keys(isValue(object) ? Object(object) : object);
   };
 
 
 /***/ },
 /* 10 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-  'use strict';
+  "use strict";
 
-  module.exports = function (value) {
-  	if (value == null) throw new TypeError("Cannot use null or undefined");
-  	return value;
+  var _undefined = __webpack_require__(11)(); // Support ES3 engines
+
+  module.exports = function (val) {
+   return (val !== _undefined) && (val !== null);
   };
 
 
@@ -1105,7 +1111,33 @@ return /******/ (function(modules) { // webpackBootstrap
 /* 11 */
 /***/ function(module, exports) {
 
-  'use strict';
+  "use strict";
+
+  // eslint-disable-next-line no-empty-function
+  module.exports = function () {};
+
+
+/***/ },
+/* 12 */
+/***/ function(module, exports, __webpack_require__) {
+
+  "use strict";
+
+  var isValue = __webpack_require__(10);
+
+  module.exports = function (value) {
+  	if (!isValue(value)) throw new TypeError("Cannot use null or undefined");
+  	return value;
+  };
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports, __webpack_require__) {
+
+  "use strict";
+
+  var isValue = __webpack_require__(10);
 
   var forEach = Array.prototype.forEach, create = Object.create;
 
@@ -1114,10 +1146,11 @@ return /******/ (function(modules) { // webpackBootstrap
   	for (key in src) obj[key] = src[key];
   };
 
-  module.exports = function (options/*, …options*/) {
+  // eslint-disable-next-line no-unused-vars
+  module.exports = function (opts1 /*, …options*/) {
   	var result = create(null);
   	forEach.call(arguments, function (options) {
-  		if (options == null) return;
+  		if (!isValue(options)) return;
   		process(Object(options), result);
   	});
   	return result;
@@ -1125,46 +1158,48 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 12 */
+/* 14 */
 /***/ function(module, exports) {
 
   // Deprecated
 
-  'use strict';
+  "use strict";
 
-  module.exports = function (obj) { return typeof obj === 'function'; };
-
-
-/***/ },
-/* 13 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = __webpack_require__(14)()
-  	? String.prototype.contains
-  	: __webpack_require__(15);
-
-
-/***/ },
-/* 14 */
-/***/ function(module, exports) {
-
-  'use strict';
-
-  var str = 'razdwatrzy';
-
-  module.exports = function () {
-  	if (typeof str.contains !== 'function') return false;
-  	return ((str.contains('dwa') === true) && (str.contains('foo') === false));
+  module.exports = function (obj) {
+   return typeof obj === "function";
   };
 
 
 /***/ },
 /* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+  "use strict";
+
+  module.exports = __webpack_require__(16)()
+  	? String.prototype.contains
+  	: __webpack_require__(17);
+
+
+/***/ },
+/* 16 */
 /***/ function(module, exports) {
 
-  'use strict';
+  "use strict";
+
+  var str = "razdwatrzy";
+
+  module.exports = function () {
+  	if (typeof str.contains !== "function") return false;
+  	return (str.contains("dwa") === true) && (str.contains("foo") === false);
+  };
+
+
+/***/ },
+/* 17 */
+/***/ function(module, exports) {
+
+  "use strict";
 
   var indexOf = String.prototype.indexOf;
 
@@ -1174,25 +1209,25 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 16 */
+/* 18 */
 /***/ function(module, exports) {
 
-  'use strict';
+  "use strict";
 
   module.exports = function (fn) {
-  	if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
+  	if (typeof fn !== "function") throw new TypeError(fn + " is not a function");
   	return fn;
   };
 
 
 /***/ },
-/* 17 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
 
-  var isEmpty = __webpack_require__(18)
-    , value   = __webpack_require__(10)
+  var isEmpty = __webpack_require__(20)
+    , value   = __webpack_require__(12)
 
     , hasOwnProperty = Object.prototype.hasOwnProperty;
 
@@ -1208,32 +1243,32 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 18 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
-  'use strict';
+  "use strict";
 
-  var value = __webpack_require__(10)
-
-    , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
+  var value                   = __webpack_require__(12)
+    , objPropertyIsEnumerable = Object.prototype.propertyIsEnumerable;
 
   module.exports = function (obj) {
   	var i;
   	value(obj);
-  	for (i in obj) { //jslint: ignore
-  		if (propertyIsEnumerable.call(obj, i)) return false;
+  	for (i in obj) {
+  		// Jslint: ignore
+  		if (objPropertyIsEnumerable.call(obj, i)) return false;
   	}
   	return true;
   };
 
 
 /***/ },
-/* 19 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
-  var WebSocket = __webpack_require__(20);
-  var emitter = __webpack_require__(22);
-  var debug = __webpack_require__(33)('hypertimer:master');
+  var WebSocket = __webpack_require__(22);
+  var emitter = __webpack_require__(24);
+  var debug = __webpack_require__(36)('hypertimer:master');
 
   exports.createMaster = function (now, config, port) {
     var master = new WebSocket.Server({port: port});
@@ -1289,28 +1324,28 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 20 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
   module.exports = (typeof window === 'undefined' || typeof window.WebSocket === 'undefined') ?
-      __webpack_require__(21) :
+      __webpack_require__(23) :
       window.WebSocket;
 
 
 /***/ },
-/* 21 */
+/* 23 */
 /***/ function(module, exports) {
 
-  module.exports = __WEBPACK_EXTERNAL_MODULE_21__;
+  module.exports = __WEBPACK_EXTERNAL_MODULE_23__;
 
 /***/ },
-/* 22 */
+/* 24 */
 /***/ function(module, exports, __webpack_require__) {
 
   // Turn a WebSocket in an event emitter.
   var eventEmitter = __webpack_require__(2);
-  var Promise = __webpack_require__(23);
-  var debug = __webpack_require__(33)('hypertimer:socket');
+  var Promise = __webpack_require__(25);
+  var debug = __webpack_require__(36)('hypertimer:socket');
 
   var TIMEOUT = 60000; // ms
   // TODO: make timeout a configuration setting
@@ -1420,34 +1455,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 23 */
-/***/ function(module, exports, __webpack_require__) {
-
-  module.exports = (typeof window === 'undefined' || typeof window.Promise === 'undefined') ?
-      __webpack_require__(24) :
-      window.Promise;
-
-
-/***/ },
-/* 24 */
-/***/ function(module, exports, __webpack_require__) {
-
-  'use strict';
-
-  module.exports = __webpack_require__(25)
-
-
-/***/ },
 /* 25 */
 /***/ function(module, exports, __webpack_require__) {
 
-  'use strict';
-
-  module.exports = __webpack_require__(26);
-  __webpack_require__(28);
-  __webpack_require__(29);
-  __webpack_require__(30);
-  __webpack_require__(31);
+  module.exports = (typeof window === 'undefined' || typeof window.Promise === 'undefined') ?
+      __webpack_require__(26) :
+      window.Promise;
 
 
 /***/ },
@@ -1456,7 +1469,30 @@ return /******/ (function(modules) { // webpackBootstrap
 
   'use strict';
 
-  var asap = __webpack_require__(27);
+  module.exports = __webpack_require__(27)
+
+
+/***/ },
+/* 27 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  module.exports = __webpack_require__(28);
+  __webpack_require__(30);
+  __webpack_require__(31);
+  __webpack_require__(32);
+  __webpack_require__(33);
+  __webpack_require__(35);
+
+
+/***/ },
+/* 28 */
+/***/ function(module, exports, __webpack_require__) {
+
+  'use strict';
+
+  var asap = __webpack_require__(29);
 
   function noop() {}
 
@@ -1512,15 +1548,18 @@ return /******/ (function(modules) { // webpackBootstrap
       throw new TypeError('Promises must be constructed via new');
     }
     if (typeof fn !== 'function') {
-      throw new TypeError('not a function');
+      throw new TypeError('Promise constructor\'s argument is not a function');
     }
-    this._37 = 0;
-    this._12 = null;
-    this._59 = [];
+    this._75 = 0;
+    this._83 = 0;
+    this._18 = null;
+    this._38 = null;
     if (fn === noop) return;
     doResolve(fn, this);
   }
-  Promise._99 = noop;
+  Promise._47 = null;
+  Promise._71 = null;
+  Promise._44 = noop;
 
   Promise.prototype.then = function(onFulfilled, onRejected) {
     if (this.constructor !== Promise) {
@@ -1537,26 +1576,43 @@ return /******/ (function(modules) { // webpackBootstrap
       res.then(resolve, reject);
       handle(self, new Handler(onFulfilled, onRejected, res));
     });
-  };
+  }
   function handle(self, deferred) {
-    while (self._37 === 3) {
-      self = self._12;
+    while (self._83 === 3) {
+      self = self._18;
     }
-    if (self._37 === 0) {
-      self._59.push(deferred);
+    if (Promise._47) {
+      Promise._47(self);
+    }
+    if (self._83 === 0) {
+      if (self._75 === 0) {
+        self._75 = 1;
+        self._38 = deferred;
+        return;
+      }
+      if (self._75 === 1) {
+        self._75 = 2;
+        self._38 = [self._38, deferred];
+        return;
+      }
+      self._38.push(deferred);
       return;
     }
+    handleResolved(self, deferred);
+  }
+
+  function handleResolved(self, deferred) {
     asap(function() {
-      var cb = self._37 === 1 ? deferred.onFulfilled : deferred.onRejected;
+      var cb = self._83 === 1 ? deferred.onFulfilled : deferred.onRejected;
       if (cb === null) {
-        if (self._37 === 1) {
-          resolve(deferred.promise, self._12);
+        if (self._83 === 1) {
+          resolve(deferred.promise, self._18);
         } else {
-          reject(deferred.promise, self._12);
+          reject(deferred.promise, self._18);
         }
         return;
       }
-      var ret = tryCallOne(cb, self._12);
+      var ret = tryCallOne(cb, self._18);
       if (ret === IS_ERROR) {
         reject(deferred.promise, LAST_ERROR);
       } else {
@@ -1584,8 +1640,8 @@ return /******/ (function(modules) { // webpackBootstrap
         then === self.then &&
         newValue instanceof Promise
       ) {
-        self._37 = 3;
-        self._12 = newValue;
+        self._83 = 3;
+        self._18 = newValue;
         finale(self);
         return;
       } else if (typeof then === 'function') {
@@ -1593,21 +1649,30 @@ return /******/ (function(modules) { // webpackBootstrap
         return;
       }
     }
-    self._37 = 1;
-    self._12 = newValue;
+    self._83 = 1;
+    self._18 = newValue;
     finale(self);
   }
 
   function reject(self, newValue) {
-    self._37 = 2;
-    self._12 = newValue;
+    self._83 = 2;
+    self._18 = newValue;
+    if (Promise._71) {
+      Promise._71(self, newValue);
+    }
     finale(self);
   }
   function finale(self) {
-    for (var i = 0; i < self._59.length; i++) {
-      handle(self, self._59[i]);
+    if (self._75 === 1) {
+      handle(self, self._38);
+      self._38 = null;
     }
-    self._59 = null;
+    if (self._75 === 2) {
+      for (var i = 0; i < self._38.length; i++) {
+        handle(self, self._38[i]);
+      }
+      self._38 = null;
+    }
   }
 
   function Handler(onFulfilled, onRejected, promise){
@@ -1632,7 +1697,7 @@ return /******/ (function(modules) { // webpackBootstrap
       if (done) return;
       done = true;
       reject(promise, reason);
-    })
+    });
     if (!done && res === IS_ERROR) {
       done = true;
       reject(promise, LAST_ERROR);
@@ -1641,7 +1706,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 27 */
+/* 29 */
 /***/ function(module, exports) {
 
   /* WEBPACK VAR INJECTION */(function(global) {"use strict";
@@ -1722,9 +1787,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
   // Safari 6 and 6.1 for desktop, iPad, and iPhone are the only browsers that
   // have WebKitMutationObserver but not un-prefixed MutationObserver.
-  // Must use `global` instead of `window` to work in both frames and web
+  // Must use `global` or `self` instead of `window` to work in both frames and web
   // workers. `global` is a provision of Browserify, Mr, Mrs, or Mop.
-  var BrowserMutationObserver = global.MutationObserver || global.WebKitMutationObserver;
+
+  /* globals self */
+  var scope = typeof global !== "undefined" ? global : self;
+  var BrowserMutationObserver = scope.MutationObserver || scope.WebKitMutationObserver;
 
   // MutationObservers are desirable because they have high priority and work
   // reliably everywhere they are implemented.
@@ -1868,12 +1936,12 @@ return /******/ (function(modules) { // webpackBootstrap
   /* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 28 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
 
-  var Promise = __webpack_require__(26);
+  var Promise = __webpack_require__(28);
 
   module.exports = Promise;
   Promise.prototype.done = function (onFulfilled, onRejected) {
@@ -1887,12 +1955,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 29 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
 
-  var Promise = __webpack_require__(26);
+  var Promise = __webpack_require__(28);
 
   module.exports = Promise;
   Promise.prototype['finally'] = function (f) {
@@ -1909,14 +1977,14 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 30 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
 
   //This file contains the ES6 extensions to the core Promises/A+ API
 
-  var Promise = __webpack_require__(26);
+  var Promise = __webpack_require__(28);
 
   module.exports = Promise;
 
@@ -1930,9 +1998,9 @@ return /******/ (function(modules) { // webpackBootstrap
   var EMPTYSTRING = valuePromise('');
 
   function valuePromise(value) {
-    var p = new Promise(Promise._99);
-    p._37 = 1;
-    p._12 = value;
+    var p = new Promise(Promise._44);
+    p._83 = 1;
+    p._18 = value;
     return p;
   }
   Promise.resolve = function (value) {
@@ -1969,11 +2037,11 @@ return /******/ (function(modules) { // webpackBootstrap
       function res(i, val) {
         if (val && (typeof val === 'object' || typeof val === 'function')) {
           if (val instanceof Promise && val.then === Promise.prototype.then) {
-            while (val._37 === 3) {
-              val = val._12;
+            while (val._83 === 3) {
+              val = val._18;
             }
-            if (val._37 === 1) return res(i, val._12);
-            if (val._37 === 2) reject(val._12);
+            if (val._83 === 1) return res(i, val._18);
+            if (val._83 === 2) reject(val._18);
             val.then(function (val) {
               res(i, val);
             }, reject);
@@ -2022,7 +2090,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 31 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
   'use strict';
@@ -2030,37 +2098,96 @@ return /******/ (function(modules) { // webpackBootstrap
   // This file contains then/promise specific extensions that are only useful
   // for node.js interop
 
-  var Promise = __webpack_require__(26);
-  var asap = __webpack_require__(32);
+  var Promise = __webpack_require__(28);
+  var asap = __webpack_require__(34);
 
   module.exports = Promise;
 
   /* Static Functions */
 
   Promise.denodeify = function (fn, argumentCount) {
-    argumentCount = argumentCount || Infinity;
-    return function () {
-      var self = this;
-      var args = Array.prototype.slice.call(arguments, 0,
-          argumentCount > 0 ? argumentCount : 0);
-      return new Promise(function (resolve, reject) {
-        args.push(function (err, res) {
-          if (err) reject(err);
-          else resolve(res);
-        })
-        var res = fn.apply(self, args);
-        if (res &&
-          (
-            typeof res === 'object' ||
-            typeof res === 'function'
-          ) &&
-          typeof res.then === 'function'
-        ) {
-          resolve(res);
-        }
-      })
+    if (
+      typeof argumentCount === 'number' && argumentCount !== Infinity
+    ) {
+      return denodeifyWithCount(fn, argumentCount);
+    } else {
+      return denodeifyWithoutCount(fn);
     }
+  };
+
+  var callbackFn = (
+    'function (err, res) {' +
+    'if (err) { rj(err); } else { rs(res); }' +
+    '}'
+  );
+  function denodeifyWithCount(fn, argumentCount) {
+    var args = [];
+    for (var i = 0; i < argumentCount; i++) {
+      args.push('a' + i);
+    }
+    var body = [
+      'return function (' + args.join(',') + ') {',
+      'var self = this;',
+      'return new Promise(function (rs, rj) {',
+      'var res = fn.call(',
+      ['self'].concat(args).concat([callbackFn]).join(','),
+      ');',
+      'if (res &&',
+      '(typeof res === "object" || typeof res === "function") &&',
+      'typeof res.then === "function"',
+      ') {rs(res);}',
+      '});',
+      '};'
+    ].join('');
+    return Function(['Promise', 'fn'], body)(Promise, fn);
   }
+  function denodeifyWithoutCount(fn) {
+    var fnLength = Math.max(fn.length - 1, 3);
+    var args = [];
+    for (var i = 0; i < fnLength; i++) {
+      args.push('a' + i);
+    }
+    var body = [
+      'return function (' + args.join(',') + ') {',
+      'var self = this;',
+      'var args;',
+      'var argLength = arguments.length;',
+      'if (arguments.length > ' + fnLength + ') {',
+      'args = new Array(arguments.length + 1);',
+      'for (var i = 0; i < arguments.length; i++) {',
+      'args[i] = arguments[i];',
+      '}',
+      '}',
+      'return new Promise(function (rs, rj) {',
+      'var cb = ' + callbackFn + ';',
+      'var res;',
+      'switch (argLength) {',
+      args.concat(['extra']).map(function (_, index) {
+        return (
+          'case ' + (index) + ':' +
+          'res = fn.call(' + ['self'].concat(args.slice(0, index)).concat('cb').join(',') + ');' +
+          'break;'
+        );
+      }).join(''),
+      'default:',
+      'args[argLength] = cb;',
+      'res = fn.apply(self, args);',
+      '}',
+      
+      'if (res &&',
+      '(typeof res === "object" || typeof res === "function") &&',
+      'typeof res.then === "function"',
+      ') {rs(res);}',
+      '});',
+      '};'
+    ].join('');
+
+    return Function(
+      ['Promise', 'fn'],
+      body
+    )(Promise, fn);
+  }
+
   Promise.nodeify = function (fn) {
     return function () {
       var args = Array.prototype.slice.call(arguments);
@@ -2081,7 +2208,7 @@ return /******/ (function(modules) { // webpackBootstrap
         }
       }
     }
-  }
+  };
 
   Promise.prototype.nodeify = function (callback, ctx) {
     if (typeof callback != 'function') return this;
@@ -2095,17 +2222,17 @@ return /******/ (function(modules) { // webpackBootstrap
         callback.call(ctx, err);
       });
     });
-  }
+  };
 
 
 /***/ },
-/* 32 */
+/* 34 */
 /***/ function(module, exports, __webpack_require__) {
 
   "use strict";
 
   // rawAsap provides everything we need except exception management.
-  var rawAsap = __webpack_require__(27);
+  var rawAsap = __webpack_require__(29);
   // RawTasks are recycled to reduce GC churn.
   var freeTasks = [];
   // We queue errors to ensure they are thrown in right order (FIFO).
@@ -2171,10 +2298,78 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 33 */
+/* 35 */
 /***/ function(module, exports, __webpack_require__) {
 
-  var Debug = typeof window !== 'undefined' ? window.Debug : __webpack_require__(34);
+  'use strict';
+
+  var Promise = __webpack_require__(28);
+
+  module.exports = Promise;
+  Promise.enableSynchronous = function () {
+    Promise.prototype.isPending = function() {
+      return this.getState() == 0;
+    };
+
+    Promise.prototype.isFulfilled = function() {
+      return this.getState() == 1;
+    };
+
+    Promise.prototype.isRejected = function() {
+      return this.getState() == 2;
+    };
+
+    Promise.prototype.getValue = function () {
+      if (this._83 === 3) {
+        return this._18.getValue();
+      }
+
+      if (!this.isFulfilled()) {
+        throw new Error('Cannot get a value of an unfulfilled promise.');
+      }
+
+      return this._18;
+    };
+
+    Promise.prototype.getReason = function () {
+      if (this._83 === 3) {
+        return this._18.getReason();
+      }
+
+      if (!this.isRejected()) {
+        throw new Error('Cannot get a rejection reason of a non-rejected promise.');
+      }
+
+      return this._18;
+    };
+
+    Promise.prototype.getState = function () {
+      if (this._83 === 3) {
+        return this._18.getState();
+      }
+      if (this._83 === -1 || this._83 === -2) {
+        return 0;
+      }
+
+      return this._83;
+    };
+  };
+
+  Promise.disableSynchronous = function() {
+    Promise.prototype.isPending = undefined;
+    Promise.prototype.isFulfilled = undefined;
+    Promise.prototype.isRejected = undefined;
+    Promise.prototype.getValue = undefined;
+    Promise.prototype.getReason = undefined;
+    Promise.prototype.getState = undefined;
+  };
+
+
+/***/ },
+/* 36 */
+/***/ function(module, exports, __webpack_require__) {
+
+  var Debug = typeof window !== 'undefined' ? window.Debug : __webpack_require__(37);
 
   module.exports = Debug || function () {
     // empty stub when in the browser
@@ -2183,21 +2378,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 34 */
+/* 37 */
 /***/ function(module, exports) {
 
-  module.exports = __WEBPACK_EXTERNAL_MODULE_34__;
+  module.exports = __WEBPACK_EXTERNAL_MODULE_37__;
 
 /***/ },
-/* 35 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
-  var WebSocket = __webpack_require__(20);
-  var Promise = __webpack_require__(23);
-  var debug = __webpack_require__(33)('hypertimer:slave');
-  var emitter = __webpack_require__(22);
-  var stat = __webpack_require__(36);
-  var util = __webpack_require__(37);
+  var WebSocket = __webpack_require__(22);
+  var Promise = __webpack_require__(25);
+  var debug = __webpack_require__(36)('hypertimer:slave');
+  var emitter = __webpack_require__(24);
+  var stat = __webpack_require__(39);
+  var util = __webpack_require__(40);
 
   // TODO: make these constants configurable
   var INTERVAL = 3600000; // once an hour
@@ -2318,7 +2513,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 36 */
+/* 39 */
 /***/ function(module, exports) {
 
   // basic statistical functions
@@ -2370,10 +2565,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 37 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
-  var Promise = __webpack_require__(23);
+  var Promise = __webpack_require__(25);
 
   /**
    * Resolve a promise after a delay
@@ -2439,7 +2634,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 38 */
+/* 41 */
 /***/ function(module, exports) {
 
   

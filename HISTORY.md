@@ -1,6 +1,11 @@
 # History
 
 
+## 2018-01-24, version 3.0.0
+
+- Upgraded dependencies to the latest version, notably `ws` and `debug`.
+
+
 ## 2015-12-08, version 2.1.3
 
 - Upgraded dependencies to the latest versions.
